@@ -9,17 +9,20 @@ var version = '1';
 var vis = {
     mosaicnew: {
       'bands': ['swir1_median', 'nir_median', 'red_median'],
-      'gain': '0.08,0.06,0.2',
+      // 'gain': '0.08,0.06,0.2',
+      'min': 0.001, 'max': 0.4, 
       'gamma': 0.5
     },
     mosaicWet: {
         'bands': ['swir1_median_wet', 'nir_median_wet', 'red_median_wet'],
-        'gain': '0.08,0.06,0.2',
+        // 'gain': '0.08,0.06,0.2',
+        'min': 0.001, 'max': 0.4,
         'gamma': 0.5
     },
     mosaicDry: {
         'bands': ['swir1_median_dry', 'nir_median_dry', 'red_median_dry'],
-        'gain': '0.08,0.06,0.2',
+        // 'gain': '0.08,0.06,0.2',
+        'min': 0.001, 'max': 0.4,
         'gamma': 0.5
     },
     mosaico: {
@@ -76,7 +79,7 @@ var params = [
     { 'year': 1987, 'dateStart': '1987-01-01', 'dateEnd': '1987-12-31', 'territory': 'Caatinga' },
     { 'year': 1988, 'dateStart': '1988-01-01', 'dateEnd': '1988-12-31', 'territory': 'Caatinga' },
     { 'year': 1989, 'dateStart': '1989-01-01', 'dateEnd': '1989-12-31', 'territory': 'Caatinga' },
-    { 'year': 2020, 'dateStart': '2020-01-01', 'dateEnd': '2020-12-31', 'territory': 'CaatingaA' },
+    { 'year': 2020, 'dateStart': '2020-01-01', 'dateEnd': '2020-12-31', 'territory': 'Caatinga' },
     { 'year': 2021, 'dateStart': '2021-01-01', 'dateEnd': '2021-12-31', 'territory': 'Caatinga' },
     { 'year': 2022, 'dateStart': '2022-01-01', 'dateEnd': '2022-12-31', 'territory': 'Caatinga' },
     { 'year': 2023, 'dateStart': '2023-01-01', 'dateEnd': '2023-12-31', 'territory': 'Caatinga' },
@@ -123,12 +126,12 @@ params.forEach(
             .filter(ee.Filter.bounds(limitBoundCaat))
             .select(spectralBands);
 
-        // apply scaling factor
-        collection = collection.map(
-            function (image) {
-                return image.multiply(10000).copyProperties(image, ['system:time_start', 'system:time_end']);
-            }
-        );
+        // // apply scaling factor
+        // collection = collection.map(
+        //     function (image) {
+        //         return image.multiply(10000).copyProperties(image, ['system:time_start', 'system:time_end']);
+        //     }
+        // );
         if (obj.year < 2024){
             var imgMosaicYY = imgMosaic.filter(ee.Filter.eq('year', obj.year));
         } 
@@ -140,12 +143,12 @@ params.forEach(
             }
         );
 
-        // calculate SMA indexes        
-        collection = collection
-            .map(sma.getNDFI)
-            .map(sma.getSEFI)
-            .map(sma.getWEFI)
-            .map(sma.getFNS);
+        // // calculate SMA indexes        
+        // collection = collection
+        //     .map(sma.getNDFI)
+        //     .map(sma.getSEFI)
+        //     .map(sma.getWEFI)
+        //     .map(sma.getFNS);
 
         // calculate Spectral indexes        
         collection = collection
@@ -182,13 +185,14 @@ params.forEach(
             .set('version', version);
 
         print(mosaic);
+        print("lista de bandas ", mosaic.bandNames());
 
         var name = (
-            obj.territory.replace(' ', '') + '-Caatinga-' +
+            obj.territory.replace(' ', '') + '-MosM-' +
             // pathRow + '-' +
             obj.year + '-' +
             version
-        ).toUpperCase();
+        )//.toUpperCase();
 
         mosaic = mosaic.clip(limitBoundCaat);
 
@@ -206,3 +210,4 @@ params.forEach(
 );
 
 // Map.centerObject(limitBoundCaat, 10);
+

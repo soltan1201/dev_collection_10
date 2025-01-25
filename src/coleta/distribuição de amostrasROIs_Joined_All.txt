@@ -1,0 +1,388 @@
+processing the file =>  /content/drive/MyDrive/ROIs_Joined_All/bassinG_ROIs_741_wl.csv
+the table dfROIs Shape =  (20091, 149)
+class
+4     18667
+3      1320
+12       75
+15       29
+Name: count, dtype: int64
+processing the file =>  /content/drive/MyDrive/ROIs_Joined_All/bassinG_ROIs_7422_wl.csv
+the table dfROIs Shape =  (711885, 149)
+class
+4     657090
+15     34007
+3      16103
+12      3056
+33       763
+25       445
+21       388
+24        20
+30        13
+Name: count, dtype: int64
+processing the file =>  /content/drive/MyDrive/ROIs_Joined_All/bassinG_ROIs_7421_wl.csv
+the table dfROIs Shape =  (1434946, 149)
+class
+4     1373314
+12      32484
+15      16424
+3       11890
+25        834
+Name: count, dtype: int64
+processing the file =>  /content/drive/MyDrive/ROIs_Joined_All/bassinG_ROIs_745_wl.csv
+the table dfROIs Shape =  (1456031, 149)
+class
+4     1379856
+12      38617
+15      30541
+3        6637
+25        299
+21         44
+33         34
+41          3
+Name: count, dtype: int64
+processing the file =>  /content/drive/MyDrive/ROIs_Joined_All/bassinG_ROIs_7492_wl.csv
+the table dfROIs Shape =  (32345, 149)
+class
+4     29448
+3      2892
+12        5
+Name: count, dtype: int64
+processing the file =>  /content/drive/MyDrive/ROIs_Joined_All/bassinG_ROIs_746_wl.csv
+the table dfROIs Shape =  (811807, 149)
+class
+4     754278
+15     29323
+3      24363
+12      3712
+33        90
+25        41
+Name: count, dtype: int64
+processing the file =>  /content/drive/MyDrive/ROIs_Joined_All/bassinG_ROIs_751_wl.csv
+the table dfROIs Shape =  (108661, 149)
+class
+4     68686
+3     38787
+15      728
+33      390
+25       63
+39        7
+Name: count, dtype: int64
+processing the file =>  /content/drive/MyDrive/ROIs_Joined_All/bassinG_ROIs_744_wl.csv
+the table dfROIs Shape =  (2434642, 149)
+class
+4     2341724
+15      60275
+12      27468
+25       2590
+3        2502
+33         83
+Name: count, dtype: int64
+processing the file =>  /content/drive/MyDrive/ROIs_Joined_All/bassinG_ROIs_752_wl.csv
+the table dfROIs Shape =  (239355, 149)
+class
+4     228581
+15      9622
+3        806
+25       151
+33       105
+12        90
+Name: count, dtype: int64
+processing the file =>  /content/drive/MyDrive/ROIs_Joined_All/bassinG_ROIs_753_wl.csv
+the table dfROIs Shape =  (229306, 149)
+class
+4     202537
+3      15170
+15      9930
+33       905
+32       609
+25        88
+21        42
+24        19
+12         6
+Name: count, dtype: int64
+processing the file =>  /content/drive/MyDrive/ROIs_Joined_All/bassinG_ROIs_754_wl.csv
+the table dfROIs Shape =  (288433, 149)
+class
+4     253176
+15     31436
+12      1559
+33      1194
+3       1068
+Name: count, dtype: int64
+processing the file =>  /content/drive/MyDrive/ROIs_Joined_All/bassinG_ROIs_756_wl.csv
+the table dfROIs Shape =  (271656, 149)
+class
+4     239347
+15     29317
+3       2313
+12       338
+33       182
+25       159
+Name: count, dtype: int64
+processing the file =>  /content/drive/MyDrive/ROIs_Joined_All/bassinG_ROIs_757_wl.csv
+the table dfROIs Shape =  (56886, 149)
+class
+4     44270
+15    12009
+12      309
+3       166
+25       67
+33       65
+Name: count, dtype: int64
+processing the file =>  /content/drive/MyDrive/ROIs_Joined_All/bassinG_ROIs_758_wl.csv
+the table dfROIs Shape =  (21863, 149)
+class
+4     16388
+15     5381
+25       51
+24       43
+Name: count, dtype: int64
+processing the file =>  /content/drive/MyDrive/ROIs_Joined_All/bassinG_ROIs_759_wl.csv
+the table dfROIs Shape =  (11258, 149)
+class
+15    6231
+4     5006
+33      21
+Name: count, dtype: int64
+processing the file =>  /content/drive/MyDrive/ROIs_Joined_All/bassinG_ROIs_755_wl.csv
+the table dfROIs Shape =  (446437, 149)
+class
+4     376690
+15     65905
+12      2304
+3        706
+33       689
+25        69
+32        39
+24        35
+Name: count, dtype: int64
+processing the file =>  /content/drive/MyDrive/ROIs_Joined_All/bassinG_ROIs_76111_wl.csv
+the table dfROIs Shape =  (203088, 149)
+class
+4     129341
+15     73552
+12       178
+3         17
+Name: count, dtype: int64
+processing the file =>  /content/drive/MyDrive/ROIs_Joined_All/bassinG_ROIs_76116_wl.csv
+the table dfROIs Shape =  (305181, 149)
+class
+4     284951
+15     17028
+12      2639
+3        422
+25       141
+Name: count, dtype: int64
+processing the file =>  /content/drive/MyDrive/ROIs_Joined_All/bassinG_ROIs_7613_wl.csv
+the table dfROIs Shape =  (13046, 149)
+class
+4     7617
+15    3209
+12    2151
+33      36
+3       33
+Name: count, dtype: int64
+processing the file =>  /content/drive/MyDrive/ROIs_Joined_All/bassinG_ROIs_7612_wl.csv
+the table dfROIs Shape =  (101210, 149)
+class
+4     84837
+15    15361
+12      777
+25      166
+3        69
+Name: count, dtype: int64
+processing the file =>  /content/drive/MyDrive/ROIs_Joined_All/bassinG_ROIs_7616_wl.csv
+the table dfROIs Shape =  (86226, 149)
+class
+4     49050
+15    29348
+12     6966
+25      862
+Name: count, dtype: int64
+processing the file =>  /content/drive/MyDrive/ROIs_Joined_All/bassinG_ROIs_7615_wl.csv
+the table dfROIs Shape =  (142157, 149)
+class
+4     69120
+12    49739
+15    19899
+25     1499
+20      988
+33      883
+3        26
+48        3
+Name: count, dtype: int64
+processing the file =>  /content/drive/MyDrive/ROIs_Joined_All/bassinG_ROIs_7617_wl.csv
+the table dfROIs Shape =  (20739, 149)
+class
+4     12719
+12     3191
+15     2611
+33     2218
+Name: count, dtype: int64
+processing the file =>  /content/drive/MyDrive/ROIs_Joined_All/bassinG_ROIs_7614_wl.csv
+the table dfROIs Shape =  (226200, 149)
+class
+4     139486
+15     61476
+12     24056
+25      1038
+3         91
+33        53
+Name: count, dtype: int64
+processing the file =>  /content/drive/MyDrive/ROIs_Joined_All/bassinG_ROIs_7618_wl.csv
+the table dfROIs Shape =  (40014, 149)
+class
+4     25944
+15     9936
+12     3430
+25      704
+Name: count, dtype: int64
+processing the file =>  /content/drive/MyDrive/ROIs_Joined_All/bassinG_ROIs_7621_wl.csv
+the table dfROIs Shape =  (354869, 149)
+class
+4     246218
+15    108118
+3        533
+Name: count, dtype: int64
+processing the file =>  /content/drive/MyDrive/ROIs_Joined_All/bassinG_ROIs_7619_wl.csv
+the table dfROIs Shape =  (656770, 149)
+class
+4     643482
+15     10481
+12      1597
+3        654
+33       305
+25       251
+Name: count, dtype: int64
+processing the file =>  /content/drive/MyDrive/ROIs_Joined_All/bassinG_ROIs_764_wl.csv
+the table dfROIs Shape =  (359540, 149)
+class
+15    238944
+4     120510
+12        56
+3         20
+25        10
+Name: count, dtype: int64
+processing the file =>  /content/drive/MyDrive/ROIs_Joined_All/bassinG_ROIs_765_wl.csv
+the table dfROIs Shape =  (1032, 147)
+class
+4     945
+15     87
+Name: count, dtype: int64
+processing the file =>  /content/drive/MyDrive/ROIs_Joined_All/bassinG_ROIs_7622_wl.csv
+the table dfROIs Shape =  (1676743, 149)
+class
+4     1387834
+15     279417
+12       5337
+3        1522
+25       1330
+33       1290
+24         13
+Name: count, dtype: int64
+processing the file =>  /content/drive/MyDrive/ROIs_Joined_All/bassinG_ROIs_767_wl.csv
+the table dfROIs Shape =  (90270, 149)
+class
+4     49459
+15    37501
+25     1580
+3      1257
+12      382
+33       72
+24       19
+Name: count, dtype: int64
+processing the file =>  /content/drive/MyDrive/ROIs_Joined_All/bassinG_ROIs_771_wl.csv
+the table dfROIs Shape =  (26937, 149)
+class
+15    25185
+4      1564
+25      169
+12       19
+Name: count, dtype: int64
+processing the file =>  /content/drive/MyDrive/ROIs_Joined_All/bassinG_ROIs_772_wl.csv
+the table dfROIs Shape =  (134138, 149)
+class
+4     85241
+15    37377
+12     7107
+30     2627
+3      1421
+25      260
+9       105
+Name: count, dtype: int64
+processing the file =>  /content/drive/MyDrive/ROIs_Joined_All/bassinG_ROIs_773_wl.csv
+the table dfROIs Shape =  (3992, 149)
+class
+15    2536
+4      893
+33     446
+25      90
+12      27
+Name: count, dtype: int64
+processing the file =>  /content/drive/MyDrive/ROIs_Joined_All/bassinG_ROIs_766_wl.csv
+the table dfROIs Shape =  (645780, 149)
+class
+15    455818
+4     188241
+3       1696
+41        14
+12        11
+Name: count, dtype: int64
+processing the file =>  /content/drive/MyDrive/ROIs_Joined_All/bassinG_ROIs_7742_wl.csv
+the table dfROIs Shape =  (10663, 149)
+class
+15    9383
+4     1095
+25     151
+3       34
+Name: count, dtype: int64
+processing the file =>  /content/drive/MyDrive/ROIs_Joined_All/bassinG_ROIs_775_wl.csv
+the table dfROIs Shape =  (1431, 147)
+class
+15    1008
+4      244
+24     179
+Name: count, dtype: int64
+processing the file =>  /content/drive/MyDrive/ROIs_Joined_All/bassinG_ROIs_776_wl.csv
+the table dfROIs Shape =  (264392, 149)
+class
+15    148034
+4      88675
+12     23630
+3       2879
+25      1052
+33       106
+9         16
+Name: count, dtype: int64
+processing the file =>  /content/drive/MyDrive/ROIs_Joined_All/bassinG_ROIs_763_wl.csv
+the table dfROIs Shape =  (1608872, 149)
+class
+15    903320
+4     677190
+12     24926
+3       2852
+25       505
+33        79
+Name: count, dtype: int64
+processing the file =>  /content/drive/MyDrive/ROIs_Joined_All/bassinG_ROIs_7741_wl.csv
+the table dfROIs Shape =  (548090, 149)
+class
+12    249115
+4     182338
+15    107098
+3       8678
+25       490
+41       196
+33       148
+48        21
+21         6
+Name: count, dtype: int64
+processing the file =>  /content/drive/MyDrive/ROIs_Joined_All/bassinG_ROIs_777_wl.csv
+the table dfROIs Shape =  (44930, 149)
+class
+15    28971
+4     15738
+25      113
+12       92
+3        16
+Name: count, dtype: int64
