@@ -138,33 +138,39 @@ def iterandoXanoImCruda(limiteEst, estadoCod):
                     .remap(param['classMapB'], param['classNew'])
                     .updateMask(maskunico)
 
-        ) 
-        
+        )         
         imgDynamica = (
             imgDynamica
                 .where(imgCobBef.eq(4).And( imgCobCou.eq(15)), 1)    # Desmatamento to pasture
                 .where(imgCobBef.eq(4).And( imgCobCou.eq(18)), 2)    # Desmatamento to agriculture
                 .where(imgCobBef.eq(4).And( imgCobCou.eq(21)), 3)    # Desmatamento to Mosaic of uses
-                .where(imgCobBef.eq(18).And(imgCobCou.eq(15)), 4)   # agriculture to pasture
-                .where(imgCobBef.eq(18).And(imgCobCou.eq(21)), 5)   # agriculture to Mosaic of uses
-                .where(imgCobBef.eq(15).And(imgCobCou.eq(18)), 6)   # Pasture to agriculture
-                .where(imgCobBef.eq(15).And(imgCobCou.eq(21)), 7)   # Pasture to Mosaic of uses
-                .where(imgCobBef.eq(21).And(imgCobCou.eq(15)), 8)   # Mosaic of uses to pasture
-                .where(imgCobBef.eq(21).And(imgCobCou.eq(18)), 9)   # Mosaic of uses to agriculture
-                .where(imgDynamica.eq(2).And(imgCobCou.eq(15)), 10)   # Desmatamento to agriculture to pasture
-                .where(imgDynamica.eq(9).And(imgCobCou.eq(15)), 11)   # Mosaic of uses to agriculture to pasture
-                .where(imgDynamica.eq(6).And(imgCobCou.eq(15)), 12)   # pasture to agriculture to pasture
-                .where(imgDynamica.eq(1).And(imgCobCou.eq(18)), 13)   # Desmatamento to pasture to agriculture 
-                .where(imgDynamica.eq(8).And(imgCobCou.eq(18)), 14)   # Mosaic of uses to pasture to agriculture 
-                .where(imgDynamica.eq(4).And(imgCobCou.eq(18)), 15)   # agriculture to pasture to agriculture 
-                .where(imgDynamica.eq(3).And(imgCobCou.eq(18)), 16)   # Desmatamento to Mosaic of uses to agriculture 
-                .where(imgDynamica.eq(1).And(imgCobCou.eq(21)), 17)   # Desmatamento  to pasture to Mosaic of uses
-                .where(imgDynamica.eq(2).And(imgCobCou.eq(21)), 18)   # Desmatamento to agriculture to Mosaic of uses
+                .where(imgCobBef.eq(18).And(imgCobCou.eq(15)), 4)    # agriculture to pasture
+                .where(imgCobBef.eq(18).And(imgCobCou.eq(21)), 5)    # agriculture to Mosaic of uses
+                .where(imgCobBef.eq(18).And(imgCobCou.eq(4) ), 6)      # agriculture to Regeneration
+                .where(imgCobBef.eq(15).And(imgCobCou.eq(18)), 7)      # Pasture to agriculture
+                .where(imgCobBef.eq(15).And(imgCobCou.eq(21)), 8)      # Pasture to Mosaic of uses
+                .where(imgCobBef.eq(15).And(imgCobCou.eq(4) ), 9)      # Pasture to Regeneration
+                .where(imgCobBef.eq(21).And(imgCobCou.eq(15)), 10)     # Mosaic of uses to pasture
+                .where(imgCobBef.eq(21).And(imgCobCou.eq(18)), 11)     # Mosaic of uses to agriculture
+                .where(imgCobBef.eq(21).And(imgCobCou.eq(4) ), 12)     # Mosaic of uses to Regeneration
+                .where(imgDynamica.eq(2).And(imgCobCou.eq(15)), 13)    # Desmatamento to agriculture to pasture
+                .where(imgDynamica.eq(2).And(imgCobCou.eq(21)), 14)    # Desmatamento to agriculture to Mosaic of uses
+                .where(imgDynamica.eq(2).And(imgCobCou.eq(4) ), 15)    # Desmatamento to agriculture to Regeneration
+                .where(imgDynamica.eq(3).And(imgCobCou.eq(18)), 16)    # Desmatamento to Mosaic of uses to agriculture 
+                .where(imgDynamica.eq(3).And(imgCobCou.eq(15)), 17)    # Desmatamento to Mosaic of uses to pasture 
+                .where(imgDynamica.eq(3).And(imgCobCou.eq(4) ), 18)    # Desmatamento to Mosaic of uses to Regeneration 
+                .where(imgDynamica.eq(1).And(imgCobCou.eq(21)), 19)    # Desmatamento to pasture to Mosaic of uses
+                .where(imgDynamica.eq(1).And(imgCobCou.eq(18)), 20)    # Desmatamento to pasture to agriculture 
+                .where(imgDynamica.eq(1).And(imgCobCou.eq(4) ), 21)    # Desmatamento to pasture to Regeneration                 
+                .where(imgDynamica.eq(11).And(imgCobCou.eq(15)), 22)   # Mosaic of uses to agriculture to pasture
+                .where(imgDynamica.eq(10).And(imgCobCou.eq(18)), 23)   # Mosaic of uses to pasture to agriculture 
+                .where(imgDynamica.eq(7).And(imgCobCou.eq(15) ), 24)   # pasture to agriculture to pasture              
+                .where(imgDynamica.eq(4).And(imgCobCou.eq(18) ), 25)   # agriculture to pasture to agriculture                 
                 # .rename('dynamica_' + str(nyear))
             )
     imgDynamica = imgDynamica.rename('classe')
 
-    areaTemp = calculateArea (imgDynamica, pixelArea, recorteGeo)        
+    areaTemp = calculateArea (imgDynamica.selfMask(), pixelArea, recorteGeo)        
     areaTemp = areaTemp.map( lambda feat: feat.set(
                                         'year', nyear, 
                                         'region', 'Caatinga', 
@@ -190,12 +196,12 @@ def processoExportar(areaFeat, nameT):
 # rasterLimit = ee.Image(param['biomas_250_rasters']).eq(2)
 
 shpEstados = ee.FeatureCollection(param['BR_ESTADOS_2022'])
-lstEstCruz = ['21','22','23','24','25','26','27','28','29','31','32']
+lstEstCruz = ['22','23','24','25','26','27','28','29','31','32']
 # lstEstCruz = ['17','21','22','29'];
 
 areaGeral = ee.FeatureCollection([]) 
 # print("---- SHOW ALL BANDS FROM MAPBIOKMAS MAPS -------\n ", imgMapp.bandNames().getInfo())
-for estadoCod in lstEstCruz:    
+for estadoCod in lstEstCruz[:]:    
     print(f"processing Estado {dictEst[str(estadoCod)]} with code {estadoCod}")
     shpEstado = shpEstados.filter(ee.Filter.eq('CD_UF', estadoCod))
     areaXestado = iterandoXanoImCruda(shpEstado, estadoCod)

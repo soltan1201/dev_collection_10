@@ -35,9 +35,9 @@ except:
 relatorios = open("relatorioTaskXContas.txt", 'a+')
 
 param = {
-    'cancelar' : False,
-    'unicaconta': True,
-    'numeroTask': 30,
+    'cancelar' : True,
+    'unicaconta': False,
+    'numeroTask': 300,
     'numeroLimit': 9,
     'conta' : {
         '0': 'caatinga01',
@@ -98,10 +98,10 @@ if param['unicaconta']:
     print(f"changing to  especifique account # {cont} <> {param['conta'][str(cont)]}")
     cont = gerenciador(cont)
     if param['cancelar']:
-        gee.cancel(opentasks=True)
+        cancel(opentasks=True)
 else:
     cont = 0
     for ii in range(0,param['numeroLimit']):        
         cont = gerenciador(ii)
         if param['cancelar']:
-            gee.cancel(opentasks=True)
+            cancel(opentasks=True)

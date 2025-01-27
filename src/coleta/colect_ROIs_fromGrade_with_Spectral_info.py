@@ -41,7 +41,7 @@ class ClassMosaic_indexs_Spectral(object):
         'biomas': ['CERRADO','CAATINGA','MATAATLANTICA'],
         'classMapB': [3, 4, 5, 9, 12, 13, 15, 18, 19, 20, 21, 22, 23, 24, 25, 26, 29, 30, 31, 32, 33,
                       36, 39, 40, 41, 46, 47, 48, 49, 50, 62],
-        'classNew':  [3, 4, 3, 3, 12, 12, 15, 18, 18, 18, 15, 22, 22, 22, 22, 33, 29, 22, 33, 12, 33,
+        'classNew':  [3, 4, 3, 3, 12, 12, 15, 18, 18, 18, 21, 22, 22, 22, 22, 33, 29, 22, 33, 12, 33,
                       18, 18, 18, 18, 18, 18, 18,  4,  12, 18],
         'asset_bacias_buffer' : 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/bacias_hidrografica_caatinga_49_regions',
         'asset_grad': 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/basegrade30KMCaatinga',
@@ -49,7 +49,7 @@ class ClassMosaic_indexs_Spectral(object):
         'asset_collectionId': 'LANDSAT/COMPOSITES/C02/T1_L2_32DAY',
         'asset_mask_toSamples': 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/masks/mask_pixels_toSample', 
         'asset_output': 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/S2/ROIs/coleta2',
-        'asset_output_grade': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_byGrades_info', 
+        'asset_output_grade': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_byGradesInd', 
         # 'asset_output': 'projects/nexgenmap/SAMPLES/Caatinga',
         # Spectral bands selected
         'lsClasse': [4, 3, 12, 15, 18, 21, 22, 33],
@@ -884,18 +884,18 @@ class ClassMosaic_indexs_Spectral(object):
                 shpAllFeat = shpAllFeat.merge(ptosTemp)
                 # sys.exit()
             print(f"======  coleted rois from class {self.options['lsClasse']}  =======")
-            name_exp = 'rois_grade_' + str(idGrade) + "_" + str(nyear)# + "_cc_" + str(nclass)
-        
-            # name_exp = 'rois_grade_' + str(idGrade)
-            if askSize:
-                sizeROIscol = ee.FeatureCollection(shpAllFeat).size().getInfo()
-                if sizeROIscol > 1:
-                    self.save_ROIs_toAsset(ee.FeatureCollection(shpAllFeat), name_exp) 
-                else:
-                    print(" we can´t to export roi ")
-
+        name_exp = 'rois_grade_' + str(idGrade) # + "_" + str(nyear)# + "_cc_" + str(nclass)
+    
+        # name_exp = 'rois_grade_' + str(idGrade)
+        if askSize:
+            sizeROIscol = ee.FeatureCollection(shpAllFeat).size().getInfo()
+            if sizeROIscol > 1:
+                self.save_ROIs_toAsset(ee.FeatureCollection(shpAllFeat), name_exp) 
             else:
-                self.save_ROIs_toAsset(ee.FeatureCollection(shpAllFeat), name_exp)
+                print(" we can´t to export roi ")
+
+        else:
+            self.save_ROIs_toAsset(ee.FeatureCollection(shpAllFeat), name_exp)
                 
     
     # salva ftcol para um assetindexIni
@@ -1001,7 +1001,7 @@ lstIdCode = [
     3579, 3580, 3581, 3582, 3583
 ]
 
-reprocessar = True
+reprocessar = False
 if reprocessar:
     df = pd.read_csv('lista_gride_with_failsYearSaved.csv')
     lstIdCode = df['idGrid'].tolist()
@@ -1022,8 +1022,8 @@ param = {
         '80': 'caatinga05',
         '100': 'solkan1201',
         # '120': 'diegoGmail',
-        # '35': 'solkanGeodatin',
-        '120': 'superconta'
+        '120': 'solkanGeodatin',
+        '140': 'superconta'
     },
 }
 def gerenciador(cont):    
@@ -1051,7 +1051,7 @@ def gerenciador(cont):
             return_list= True)
         
         for lin in tarefas:   
-            print(str(lin) + '\n')         
+            print(str(lin))         
             # relatorios.write(str(lin) + '\n')
     
     elif cont > param['numeroLimit']:
@@ -1061,9 +1061,9 @@ def gerenciador(cont):
 
 askingbySizeFC = False
 searchFeatSaved = False
-cont = 1
-# if param['changeCount']:
-#     cont = gerenciador(cont)
+cont = 0
+if param['changeCount']:
+    cont = gerenciador(cont)
 
 
 objetoMosaic_exportROI = ClassMosaic_indexs_Spectral()
@@ -1075,10 +1075,10 @@ if searchFeatSaved:
     askingbySizeFC = True
 else:
     lstFeatAsset = []
-
+print(len(lstIdCode))
 # sys.exit()
-inicP = 0 # 2, 17, 40, 60 150, 190, 230, 250, 260, 300, 600
-endP = 100   # 100, 150, 250, 300, 600
+inicP = 600 # 0, 100
+endP = 800   # 100, 200, 300, 600
 for cc, item in enumerate(lstIdCode[inicP:endP]):
     print(f"# {cc + 1 + inicP} loading geometry grade {item}")   
     if item not in lstFeatAsset:
