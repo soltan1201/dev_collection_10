@@ -791,7 +791,7 @@ param = {
     # 'asset_bacias_buffer42' : 'projects/mapbiomas-workspace/AMOSTRAS/col7/CAATINGA/bacias_hidrograficaCaatbuffer5k',
     'asset_IBGE': 'users/SEEGMapBiomas/bioma_1milhao_uf2015_250mil_IBGE_geo_v4_revisao_pampa_lagoas',
     # 'assetOut': 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/Classifier/ClassVY/',
-    'assetOut': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/Classifier/ClassifV1/',
+    'assetOut': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/Classifier/ClassifyVX',
     'assetROIgrade': {'id': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_Merges_info'},   
     'asset_joinsGrBa': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_Merges_info',
     'outAssetROIs': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/roisJoinedBaGrNN', 
@@ -963,7 +963,7 @@ def save_ROIs_toAsset(collection, name):
 #exporta a imagem classificada para o asset
 def processoExportar(mapaRF, regionB, nameB):
     nomeDesc = 'BACIA_'+ str(nameB)
-    idasset =  param['assetOut'] + nomeDesc
+    idasset =  param['assetOut'] + "/" + nomeDesc
     optExp = {
         'image': mapaRF, 
         'description': nomeDesc, 
@@ -1453,27 +1453,30 @@ arqFeitos = open(path_MGRS, 'a+')
 # sys.exit()
 
 # 100 arvores
-nameBacias = [
-    '7625', '7616', '7613', '7618', #'7617', 
-    '7741',  '7721', '7619', '7443', 
-    '763', '7615',
-    # '746'
-]
-# lista de 49 bacias 
 # nameBacias = [
-    # "7754","7691","7581","7625","7584","751","7614","752","7616",
-    # "745","7424","773","7612","7613","7618","7561","755","7617","7564",
-    # "7741","761111","7422","76116","7761","7671","7615","7411","772",
-    # "7764","757","771","7712","766","7746","753","764","7541","7721",
-    # "7619","7443","765","7544", "7438","763", "7591","7592","7622","746"
+#     '7625', '7616', '7613', '7618', #'7617', 
+#     '7741',  '7721', '7619', '7443', 
+#     '763', '7615',
+#     # '746'
 # ]
-
+# lista de 49 bacias 
+nameBacias = [
+    '7754', '7691', '7581', '7625', '7584', '751', '7614', 
+    '752', '7616', '745', '7424', '773', '7612', '7613', 
+    '7618', '7561', '755', '7617', '7564', '761111','761112', 
+    '7741', '7422', '76116', '7761', '7671', '7615', '7411', 
+    '7764', '757', '771', '7712', '766', '7746', '753', '764', 
+    '7541', '7721', '772', '7619', '7443', '765', '7544', '7438', 
+    '763', '7591', '7592', '7622', '746'
+]
+print(f"we have {len(nameBacias)} bacias")
 # "761112",
 modelo = "GTB"
 knowMapSaved = False
 listBacFalta = []
-cont = 10
+cont = 0
 cont = gerenciador(cont)
+# sys.exit(0)
 for _nbacia in nameBacias[:]:
     if knowMapSaved:
         try:

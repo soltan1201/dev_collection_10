@@ -45,7 +45,7 @@ print(f" here we have {len(listaNameBacias)} basin")
 # ee.data.renameAsset(sourceId, destinationId, callback)
 # asset_output = 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/POS-CLASS/Gap-fill'
 # asset_input = 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/POS-CLASS/Gap-fills'
-asset_output = 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/Classifier/ClassifyV1'
+asset_output = 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/Classifier/ClassifyVX'
 asset_input = 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/Classifier/ClassifV1'
 changeConta = False
 fromImgCol = False
@@ -64,7 +64,7 @@ else:
     lstFails = []
     for cc, nbacia in enumerate(listaNameBacias):
         # BACIA_7411_GTB_col10-v1
-        nameImage = f'BACIA_{nbacia}_GTB_col10-v1'
+        nameImage = f'BACIA_{nbacia}_GTB_col10-v2'
                 
         try:
             # imgtmp = ee.Image(asset_input + '/' + nameImage)
