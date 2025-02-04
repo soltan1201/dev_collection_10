@@ -38,8 +38,10 @@ except:
 
 param = {
     'asset_rois_grid1': {'id' : 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_byGradesAgrWat'},
+    # 'asset_rois_grid2': {'id' : 'projects/nexgenmap/SAMPLES/Caatinga/ROIs'},
     'asset_bacias_buffer' : 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/bacias_hidrografica_caatinga_49_regions',
     'asset_output': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_merged_Indall',
+    'asset_roi_basins': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_merged_Ind',
     'asset_grad' : 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/basegrade30KMCaatinga',
     'anoInicial': 2016,
     'anoFinal': 2024,
@@ -62,7 +64,6 @@ param = {
 def ask_byGrid_saved( dict_asset, printName, listtoLoad): 
     getlstFeat2 = ee.data.getList(dict_asset)
     assetbase = "projects/earthengine-legacy/assets/" + dict_asset['id']
-    print(assetbase)
     lstPath2 = [kk for kk in getlstFeat2]
     print(f" we have {len(lstPath2)} featshp of ROIs")
     lstGridFails = []
@@ -168,11 +169,15 @@ for cc, nbacia in enumerate(listaNameBacias[:]):
         listaGrid_fails += lstFails
     name_export = 'rois_grade_' + nbacia 
     print(f"==== bacia {nbacia}==== <{featROIsreg.size().getInfo()}> ======")
-    print(featROIsreg.aggregate_histogram('class').getInfo())
+     # adding the before ROIs with natural class
+    assetROIsBasin = param['asset_roi_basins'] + '/' + name_export 
+    featBefROIs = ee.FeatureCollection(assetROIsBasin)
+    featROIsreg = featROIsreg.merge(featBefROIs)
+    
     save_ROIs_toAsset(featROIsreg, name_export)
 
 
 
 if len(listaGrid_fails) > 0:
     df = pd.DataFrame(listaGrid_fails, columns=['idGrid', 'sizeSaved'])
-    df.to_csv('lista_gride_with_failsYearSaved2.csv')
+    df.to_csv('lista_gride_with_failsYearSavedv2.csv')

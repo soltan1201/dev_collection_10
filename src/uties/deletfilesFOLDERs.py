@@ -57,6 +57,6 @@ def GetPolygonsfromFolder(assetFolder, sufixo):
 # asset = {'id': 'projects/mapbiomas-workspace/AMOSTRAS/col8/CAATINGA/ROIs/coletaROIsv6N2cluster'}
 # asset = {'id': 'projects/mapbiomas-workspace/AMOSTRAS/col8/CAATINGA/ROIs/coletaROIsv7N2manual'}
 # asset = {'id': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_byGrades_info'}
-asset = {'id': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_Merges_info'}
+asset = {'id': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_merged_Indall'}
 GetPolygonsfromFolder(asset, '')  # 
 

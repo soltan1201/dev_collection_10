@@ -596,7 +596,7 @@ def addSlopeAndHilshade(img):
     terrain = ee.Terrain.products(dem)
     hillshade = terrain.select('hillshade').divide(500).toFloat()
 
-    return img.addBands(slope.rename('solpe')).addBands(hillshade.rename('hillshade'))
+    return img.addBands(slope.rename('slope')).addBands(hillshade.rename('hillshade'))
 
 
 
@@ -651,10 +651,8 @@ def CalculateIndice(imagem):
     imageW = agregateBandsTexturasGLCM(imageW)     # "nir_contrast","red_contrast"
     imageW = agregateBandsIndexGVMI(imageW)  # "gvmi"
     imageW = agregateBandsIndexNDDI(imageW) # 'nddi'
-    # print(imageW.bandNames().getInfo())
-    # sys.exit()
+    imageW = addSlopeAndHilshade(imageW)
 
-    # return imagem.select(lstBandRed).addBands(imageW.select(band_feat, lstSuf))
     return imageW
 
 
@@ -725,6 +723,53 @@ def make_mosaicofromReducer(colMosaic):
     return mosaic
 
 
+
+def make_mosaicofromIntervalo(colMosaic, year_courrent):
+    band_year = [nband + '_median' for nband in param['bnd_L']]
+    band_drys = [bnd + '_dry' for bnd in band_year]    
+    band_wets = [bnd + '_wet' for bnd in band_year]
+
+    dictPer = {
+        'year': {
+            'start': str(str(year_courrent)) + '-01-01',
+            'end': str(year_courrent) + '-12-31',
+            'surf': 'year',
+            'bnds': band_year
+        },
+        'dry': {
+            'start': str(year_courrent) + '-08-01',
+            'end': str(year_courrent) + '-12-31',
+            'surf': 'dry',
+            'bnds': band_drys
+        },
+        'wet': {
+            'start': str(year_courrent) + '-01-01',
+            'end': str(year_courrent) + '-07-31',
+            'surf': 'wet',
+            'bnds': band_wets
+        }
+    }       
+    mosaico = None
+    lstPeriodo = ['year', 'dry', 'wet']
+    for periodo in lstPeriodo:
+        dateStart =  dictPer[periodo]['start']
+        dateEnd = dictPer[periodo]['end']
+        bands_period = dictPer[periodo]['bnds']
+        # get dry median mosaic
+        mosaictmp = (
+            colMosaic.select(param['bnd_L'])
+                .filter(ee.Filter.date(dateStart, dateEnd))
+                .max()
+                .rename(bands_period)
+        )
+        if periodo == 'year':
+            mosaico = copy.deepcopy(mosaictmp)
+        else:
+            mosaico = mosaico.addBands(mosaictmp)
+
+    return mosaico
+
+
 def calculate_indices_x_blocos(imageCol):
 
     bnd_L = ['blue','green','red','nir','swir1','swir2']        
@@ -754,28 +799,7 @@ def calculate_indices_x_blocos(imageCol):
     # print("  ", image_year.bandNames().getInfo())
 
     # sys.exit()
-    # bnd_corregida = [bnd + '_median' for bnd in band_features]
-    # image_year = image_year.select(band_features, bnd_corregida)
-    # print("imagem bandas final median \n ", image_year.bandNames().getInfo())
 
-    # image_drys = mosaicoBuilded.select(band_drys)
-    # image_drys = image_drys.select(band_drys, bnd_L)
-    # image_drys = CalculateIndice(mosaicoBuilded, band_drys, bnd_L, '_median_dry')
-    # # bnd_corregida = [bnd + '_median_dry' for bnd in band_features]
-    # # image_drys = image_drys.select(band_features, bnd_corregida)
-    # # print("imagem bandas final dry \n", image_drys.bandNames().getInfo())
-
-    # image_wets = mosaicoBuilded.select(band_wets)
-    # image_wets = image_wets.select(band_wets, bnd_L)
-    # image_wets = CalculateIndice(mosaicoBuilded, band_wets, bnd_L, '_median_wet')
-    # bnd_corregida = [bnd + '_median_wet' for bnd in band_features]
-    # image_wets = image_wets.select(band_features, bnd_corregida)
-    # print("imagem bandas final wet \n ", image_wets.bandNames().getInfo())   
-
-    # image_year =  (
-    #     image_year.addBands(image_drys).addBands(image_wets)
-    #         .addBands(mosaicoBuilded.select(band_std)) 
-    # )
     return image_year
 
 #endregion
@@ -791,16 +815,16 @@ param = {
     # 'asset_bacias_buffer42' : 'projects/mapbiomas-workspace/AMOSTRAS/col7/CAATINGA/bacias_hidrograficaCaatbuffer5k',
     'asset_IBGE': 'users/SEEGMapBiomas/bioma_1milhao_uf2015_250mil_IBGE_geo_v4_revisao_pampa_lagoas',
     # 'assetOut': 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/Classifier/ClassVY/',
-    'assetOut': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/Classifier/ClassifyVX',
-    'assetROIgrade': {'id': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_Merges_info'},   
-    'asset_joinsGrBa': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_Merges_info',
+    'assetOut': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/Classifier/ClassifyVA',
+    'assetROIgrade': {'id': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_merged_Indall'},   
+    'asset_joinsGrBa': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_merged_Indall',
     'outAssetROIs': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/roisJoinedBaGrNN', 
     'classMapB': [3, 4, 5, 9,12,13,15,18,19,20,21,22,23,24,25,26,29,30,31,32,33,36,37,38,39,40,41,42,43,44,45],
     'classNew': [3, 4, 3, 3,12,12,21,21,21,21,21,22,22,22,22,33,29,22,33,12,33, 21,33,33,21,21,21,21,21,21,21],
     'asset_mosaic': 'projects/nexgenmap/MapBiomas2/LANDSAT/BRAZIL/mosaics-2',
     'asset_collectionId': 'LANDSAT/COMPOSITES/C02/T1_L2_32DAY',
     'bnd_L': ['blue','green','red','nir','swir1','swir2'],
-    'version': 1,
+    'version': 3,
     'yearInicial': 1985,
     'yearFinal': 2024,
     'sufix': "_01",    
@@ -1159,7 +1183,7 @@ def clean_lstBandas(tmplstBNDs):
         bnd = bnd.replace('_1','')
         bnd = bnd.replace('_2','')
         bnd = bnd.replace('_3','')
-        if bnd not in lstbndsRed and 'min' not in bnd and bnd not in lstFails:
+        if bnd not in lstbndsRed and 'min' not in bnd and bnd not in lstFails and 'stdDev' not in bnd:
             lstbndsRed.append(bnd)
     return lstbndsRed
 
@@ -1274,7 +1298,7 @@ def iterandoXBacias( _nbacia, myModel, makeProb):
             bandas_lst = clean_lstBandas(dictFeatureImp[keyDictFeat][:])
             print(f"lista de bandas ótimas com {len(bandas_lst)} bandas " )
             print(' as primeiras 3 \n ==> ', bandas_lst[:3])
-            bandas_lst = bandas_lst[:50]
+            bandas_lst = bandas_lst[:45]
 
         nameFeatROIs = 'rois_grade_' + _nbacia
         print("loading Rois JOINS = ", nameFeatROIs)
@@ -1286,7 +1310,7 @@ def iterandoXBacias( _nbacia, myModel, makeProb):
         ROIs_toTrainViz = GetPolygonsfromFolder(lstSoVizConv, lstClassesUn, nyear)
         ROIs_toTrain = process_reduce_ROIsXclass(ROIs_toTrain, ROIs_toTrainViz, lstClassesUn, dfareasccYY, _nbacia)
         #     ROIs_toTrain = ROIs_toTrain.map(lambda feat: feat.set('class', ee.Number(feat.get('class')).toInt8()))
-        ROIs_toTrain = ROIs_toTrain.filter(ee.Filter.notNull(bandas_imports))
+        # ROIs_toTrain = ROIs_toTrain.filter(ee.Filter.notNull(bandas_imports))
         # print(f"===  {ROIs_toTrain.aggregate_histogram('class').getInfo()}  ===") 
         # print(f"=== vizinhas {ROIs_toTrainViz.aggregate_histogram('class').getInfo()}  ===") 
         # sys.exit()
@@ -1311,14 +1335,17 @@ def iterandoXBacias( _nbacia, myModel, makeProb):
         date_end = str(nyear) + '-12-31'
         #cria o mosaico a partir do mosaico total, cortando pelo poligono da bacia    
         mosaicColGoogle = imagens_mosaico.filter(ee.Filter.date(date_inic, date_end))
-        # print(f" have {mosaicColGoogle.size().getInfo()} images ")
-        mosaicProcess = calculate_indices_x_blocos(mosaicColGoogle)
+        mosaicoBuilded = make_mosaicofromIntervalo(mosaicColGoogle, nyear) 
+        # print(f" we have {mosaicoBuilded.bandNames().getInfo()} images ")
+        print("----- calculado todos os 102 indices ---------------------")
+        mosaicProcess = CalculateIndice(mosaicoBuilded)
         # mosaicProcess = colmosaicMapbiomas.addBands(mosaicProcess)
         # mosaicMapbiomas = mosaicMapbiomas.select(bandasComuns, bandasComunsCorr)
         # print(mosaicProcess.size().getInfo())
         ################################################################
         # listBandsMosaic = mosaicProcess.bandNames().getInfo()
         # print("bandas do mosaico ", listBandsMosaic)
+        # print(ROIs_toTrain.first().propertyNames().getInfo())
         # sys.exit()
         # print('NUMERO DE BANDAS MOSAICO ',len(listBandsMosaic) )
         # # if param['yearInicial'] == nyear:
@@ -1352,7 +1379,10 @@ def iterandoXBacias( _nbacia, myModel, makeProb):
         # lsAllprop = ROIs_toTrain_filted.first().propertyNames().getInfo()
         # print('PROPERTIES FEAT = ', lsAllprop)
         #cria o classificador com as especificacoes definidas acima 
-        bandas_imports = bandas_lst                     
+        bandas_imports = bandas_lst + ['slope', 'hillshade'] 
+
+        print(f" numero de bandas selecionadas {len(bandas_imports)} ")  
+
         print("parameter loading ", dictHiperPmtTuning[_nbacia])
         # gradeExpMemo = ['763','7438','7443','7721','7613','7616','7615','771','7625']
         gradeExpMemo = [
@@ -1453,12 +1483,7 @@ arqFeitos = open(path_MGRS, 'a+')
 # sys.exit()
 
 # 100 arvores
-# nameBacias = [
-#     '7625', '7616', '7613', '7618', #'7617', 
-#     '7741',  '7721', '7619', '7443', 
-#     '763', '7615',
-#     # '746'
-# ]
+# nameBacias = ['7619']
 # lista de 49 bacias 
 nameBacias = [
     '7754', '7691', '7581', '7625', '7584', '751', '7614', 
@@ -1475,7 +1500,7 @@ modelo = "GTB"
 knowMapSaved = False
 listBacFalta = []
 cont = 0
-cont = gerenciador(cont)
+# cont = gerenciador(cont)
 # sys.exit(0)
 for _nbacia in nameBacias[:]:
     if knowMapSaved:

@@ -43,7 +43,7 @@ param = {
     'asset_ROIs_grades': {"id" : 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/ROIs/roisGradesgrouped'},
     'asset_ROIS_bacia_grade': {'id': 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/ROIs/roisGradesgroupedBuf'},
     'asset_ROIS_joinsBaGr': {'id': 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/ROIs/roisJoinsbyBaciaNN'},
-    'asset_ROISall_joins': {'id': 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/ROIs/roisJoinedBaGrNN'},
+    'asset_ROISall_joins': {'id': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_merged_IndAll'},
     'anoInicial': 1985,
     'anoFinal': 2022,
     'numeroTask': 6,
@@ -61,10 +61,13 @@ print('lista de anos', list_anos)
 
 #nome das bacias que fazem parte do bioma (38 bacias)
 nameBacias = [
-      '732','741','742','743','744', '745','746','747','751','752',
-      '753', '754','755','756','757','758','759','762','763','765',
-      '766','767','771','772','773', '774', '775','776','777',
-      '7611','7612','7613','7614','7615','7616', '7617','7618','7619'
+    '7754', '7691', '7581', '7625', '7584', '751', '7614', 
+    '752', '7616', '745', '7424', '773', '7612', '7613', 
+    '7618', '7561', '755', '7617', '7564', '761111','761112', 
+    '7741', '7422', '76116', '7761', '7671', '7615', '7411', 
+    '7764', '757', '771', '7712', '766', '7746', '753', '764', 
+    '7541', '7721', '772', '7619', '7443', '765', '7544', '7438', 
+    '763', '7591', '7592', '7622', '746'
 ]
 
 #========================METODOS=============================
@@ -142,14 +145,14 @@ lstNameFeat = []
 # iterando com cada uma das folders FeatC do asset
 # 'asset_ROIs_cluster', 'asset_ROIs_manual', asset_ROIs_grades, asset_ROIS_bacia_grade
 # asset_ROIS_joinsBaGr ,asset_ROISall_joins
-lstKeysFolder = ['asset_ROIS_bacia_grade']   
+lstKeysFolder = ['asset_ROISall_joins']   
 for assetKey in lstKeysFolder:
     lstAssetFolder = GetPolygonsfromFolder(param[assetKey])
     list_baciaYearFaltan = []
-    for assetFeats in lstAssetFolder[:]:        
+    for cc, assetFeats in enumerate(lstAssetFolder[:]):        
         nameFeat = assetFeats.split("/")[-1]
         if nameFeat not in lstNameFeat:
-            print("loading FeatureCollection => ", assetFeats)
+            print(f" #{cc} loading FeatureCollection => ", assetFeats)
             try: 
                 ROIs = ee.FeatureCollection(assetFeats)       
                 print(nameFeat, " ", ROIs.size().getInfo())     

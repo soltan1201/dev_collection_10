@@ -50,12 +50,13 @@ class ClassMosaic_indexs_Spectral(object):
         'asset_mask_toSamples': 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/masks/mask_pixels_toSample', 
         'asset_output': 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/S2/ROIs/coleta2',
         # 'asset_output_grade': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_byGradesInd', 
-        'asset_output_grade': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_byGradesIndExt', 
+        'asset_output_grade': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_byGradesAgrWat', 
         # 'asset_output': 'projects/nexgenmap/SAMPLES/Caatinga',
         # Spectral bands selected
         # 'lsClasse': [4, 3, 12, 15, 18, 21, 22, 33],
         'lsClasse': [18,  33],
-        'lsPtos': [300, 500, 300, 350, 150, 100, 150, 300],
+        # 'lsPtos': [300, 500, 300, 350, 150, 100, 150, 300],
+        'lsPtos': [500, 500],
         "anoIntInit": 1985,
         "anoIntFin": 2024,
     }
@@ -77,12 +78,12 @@ class ClassMosaic_indexs_Spectral(object):
     ]
     features_extras = [
         'blue_stdDev','green_median_texture', 'green_min', 'green_stdDev',
-        'red_min', 'red_stdDev', 'red_edge_1_median', 'red_edge_1_median_dry', 
+        'red_min', 'red_stdDev','red_edge_1_median', 'red_edge_1_median_dry', 
         'red_edge_1_median_wet', 'red_edge_1_stdDev', 'red_edge_2_median', 
         'red_edge_2_median_dry', 'red_edge_2_median_wet', 'red_edge_2_stdDev', 
         'red_edge_3_median', 'red_edge_3_median_dry', 'red_edge_3_median_wet', 
         'red_edge_3_stdDev', 'red_edge_4_median', 'red_edge_4_median_dry', 
-        'red_edge_4_median_wet', 'red_edge_4_stdDev','swir1_stdDev', 'swir2_stdDev'
+        'red_edge_4_median_wet', 'red_edge_4_stdDev','swir1_stdDev',  'swir2_stdDev'
     ]
 
     # lst_properties = arqParam.allFeatures
@@ -108,33 +109,7 @@ class ClassMosaic_indexs_Spectral(object):
         print("lista de anos ", self.lst_year)
         
         # @collection90: mapas de uso e cobertura Mapbiomas ==> para extrair as areas estaveis
-        collection90 = ee.Image(self.options['assetMapbiomas90'])
-
-        # # Remap todas as imagens mapbiomas
-        lsBndMapBiomas = []
-        self.imgMapbiomas = ee.Image().toByte()
-
-        for year in self.lst_year:
-            band = 'classification_' + str(year)
-            lsBndMapBiomas.append(band)
-            if int(year) < 2024:
-                imgTemp = collection90.select(band).remap(
-                    self.options['classMapB'], self.options['classNew'])
-            
-            self.imgMapbiomas = self.imgMapbiomas.addBands(
-                imgTemp.rename(band))
-
-        self.imgMapbiomas = self.imgMapbiomas.select(lsBndMapBiomas)#.clip(self.regionInterest.geometry())
-
-        band_year = [nband + '_median' for nband in self.options['bnd_L']]
-        band_drys = [bnd + '_dry' for bnd in self.options['bnd_L']]    
-        band_wets = [bnd + '_wet' for bnd in self.options['bnd_L']]
-        self.bandMosaic = band_year + band_wets + band_drys
-        # print("bandas principais \n ==> ", self.bandMosaic)
-        
-
-
-
+        self.imgMapbiomas = ee.Image(self.options['assetMapbiomas90'])
 
     # def process_re_escalar_img (self, imgA):
     #     imgMosaic = imgA.select('blue_median').gte(0).rename('constant');
@@ -156,7 +131,7 @@ class ClassMosaic_indexs_Spectral(object):
         terrain = ee.Terrain.products(dem)
         hillshade = terrain.select('hillshade').divide(500).toFloat()
 
-        return img.addBands(slope.rename('solpe')).addBands(hillshade.rename('hillshade'))
+        return img.addBands(slope.rename('slope')).addBands(hillshade.rename('hillshade'))
 
 
     #region Bloco de functions de calculos de Indices 
@@ -756,8 +731,7 @@ class ClassMosaic_indexs_Spectral(object):
         eviDry = (
             colMosaic.select(['evi'])
                     .reduce(ee.Reducer.percentile([percentileDry]))
-        )
-        
+        )        
 
         collectionDry = (
             colMosaic.map(lambda img: img.mask(img.select(['evi']).gte(evilowDry))
@@ -803,7 +777,52 @@ class ClassMosaic_indexs_Spectral(object):
         )
 
         return mosaic
-   
+    
+    def make_mosaicofromIntervalo(self, colMosaic, year_courrent):
+        band_year = [nband + '_median' for nband in self.options['bnd_L']]
+        band_drys = [bnd + '_dry' for bnd in band_year]    
+        band_wets = [bnd + '_wet' for bnd in band_year]
+
+        dictPer = {
+            'year': {
+                'start': str(str(year_courrent)) + '-01-01',
+                'end': str(year_courrent) + '-12-31',
+                'surf': 'year',
+                'bnds': band_year
+            },
+            'dry': {
+                'start': str(year_courrent) + '-08-01',
+                'end': str(year_courrent) + '-12-31',
+                'surf': 'dry',
+                'bnds': band_drys
+            },
+            'wet': {
+                'start': str(year_courrent) + '-01-01',
+                'end': str(year_courrent) + '-07-31',
+                'surf': 'wet',
+                'bnds': band_wets
+            }
+        }       
+        mosaico = None
+        lstPeriodo = ['year', 'dry', 'wet']
+        for periodo in lstPeriodo:
+            dateStart =  dictPer[periodo]['start']
+            dateEnd = dictPer[periodo]['end']
+            bands_period = dictPer[periodo]['bnds']
+            # get dry median mosaic
+            mosaictmp = (
+                colMosaic.select(self.options['bnd_L'])
+                    .filter(ee.Filter.date(dateStart, dateEnd))
+                    .max()
+                    .rename(bands_period)
+            )
+            if periodo == 'year':
+                mosaico = copy.deepcopy(mosaictmp)
+            else:
+                mosaico = mosaico.addBands(mosaictmp)
+
+        return mosaico
+
     def iterate_bacias(self, idGrade, askSize):        
 
         # loading geometry bacim
@@ -812,6 +831,7 @@ class ClassMosaic_indexs_Spectral(object):
                                         ee.Filter.eq('indice', int(idGrade)))
         # print("show size regions ", oneGrade.size().getInfo())                                
         oneGrade = oneGrade.geometry()  
+        # print("show area regions ", oneGrade.area().getInfo()) 
         # sys.exit()
         
         layerSamplesMask = ee.ImageCollection(self.options['asset_mask_toSamples']
@@ -826,7 +846,8 @@ class ClassMosaic_indexs_Spectral(object):
                 numLayers = 0
         except:
             layerSamplesMask = ee.Image.constant(1).clip(oneGrade) 
-            numLayers = 0      
+            numLayers = 0    
+
         shpAllFeat = ee.FeatureCollection([]) 
         for nyear in self.lst_year[:]:
             bandYear = 'classification_' + str(nyear)
@@ -834,65 +855,71 @@ class ClassMosaic_indexs_Spectral(object):
             date_inic =  str(nyear) + '-01-01'      
             date_end = str(nyear) + '-12-31'
 
-            img_recMosaic = (
+            imgColfiltered = (
                 self.imgMosaic.filter(ee.Filter.date(date_inic, date_end))
                         .filterBounds(oneGrade)
             )
 
-            img_recMosaico = img_recMosaic.map(lambda img: self.calculateBandsIndexEVI(img))
-            mosaicoBuilded = self.make_mosaicofromReducer(img_recMosaico)
- 
+            # img_recMosaico = img_recMosaic.map(lambda img: self.calculateBandsIndexEVI(img))
+            # mosaicoBuilded = self.make_mosaicofromReducer(imgColfiltered)
+            mosaicoBuilded = self.make_mosaicofromIntervalo(imgColfiltered, nyear) 
             # print("metadado bandas names ", mosaicoBuilded.bandNames().getInfo())
 
-            print("----- calculado todos os indices ---------------------")
-            img_recMosaicnewB = self.CalculateIndice(mosaicoBuilded)
+            print("----- calculado todos os 102 indices ---------------------")
+            img_recMosaicnewB = self.CalculateIndice(mosaicoBuilded.clip(oneGrade))
             # bndAdd = img_recMosaicnewB.bandNames().getInfo()            
             # print(f"know bands names Index {len(bndAdd)}")
             # print("  ", bndAdd)
             
             # sys.exit()
-            if numLayers > 0:
-    
+            nameBandYear = bandYear
+            if nyear == 2024:
+                nameBandYear = 'classification_2023'
+            if numLayers > 0:    
                 if nyear == 2024:
-                    maskYear = layerSamplesMask.select("mask_sample_2023")
+                    maskYear = layerSamplesMask.select("mask_sample_2023").eq(1).clip(oneGrade)                    
                 else:
-                    maskYear = layerSamplesMask.select("mask_sample_" + str(nyear))
-                print("imagem mask layer => ", maskYear.bandNames().getInfo())
+                    maskYear = layerSamplesMask.select("mask_sample_" + str(nyear)).eq(1).clip(oneGrade)
+                # print("imagem mask layer => ", maskYear.bandNames().getInfo())
             else:
                 maskYear = layerSamplesMask
 
-            # shpAllFeat = ee.FeatureCollection([])                    
-            for cc, nclass in enumerate(self.options['lsClasse'][:]):
-                # print(f"processing class {nclass}")
-                if nclass not in [18, 33]:
-                    layerCC = (
-                        self.imgMapbiomas.select(bandYear).eq(int(nclass))
-                                .multiply(int(nclass)).rename('class')
-                                .updateMask(maskYear)
-                    )
-                else:
-                    layerCC = (
-                        self.imgMapbiomas.select(bandYear).eq(int(nclass))
-                                .multiply(int(nclass)).rename('class').selfMask()                                
-                    )
-                # print("numero de ptos controle ", roisAct.size().getInfo())
-                # opcoes para o sorteio estratificadoBuffBacia
-                # sample(region, scale, projection, factor, numPixels, seed, dropNulls, tileScale, geometries)
-                ptosTemp = img_recMosaicnewB.addBands(layerCC).updateMask(
-                                layerCC.gt(0)).sample(
-                                    region=  oneGrade,                                                                
-                                    scale= 30,   
-                                    numPixels= self.options['lsPtos'][cc],
-                                    dropNulls= True,
-                                    geometries= True
-                                )
-                # insere informacoes em cada ft
-                ptosTemp = ptosTemp.map(lambda feat : feat.set('year', nyear, 'GRID_ID', idGrade) )
-                shpAllFeat = shpAllFeat.merge(ptosTemp)
+            # shpAllFeat = ee.FeatureCollection([]) 
+
+            layerCC = (
+                self.imgMapbiomas.select(nameBandYear)
+                    .remap(self.options['classMapB'], self.options['classNew'])
+                    .clip(oneGrade).rename('class')             
+            )             
+            colectionGeo =  ee.FeatureCollection([
+                    ee.Feature(oneGrade, {'year': nyear, 'GRID_ID': idGrade})
+                ])
+            # print("numero de ptos controle ", roisAct.size().getInfo())
+            # opcoes para o sorteio estratificadoBuffBacia
+            # sample(region, scale, projection, factor, numPixels, seed, dropNulls, tileScale, geometries)
+            ptosTemp = (
+                img_recMosaicnewB.addBands(layerCC)
+                .addBands(ee.Image.constant(nyear).rename('year'))
+                .addBands(ee.Image.constant(idGrade).rename('GRID_ID'))
+                .updateMask(maskYear)
+                .sample(
+                    region=  oneGrade,  
+                    scale= 30,   
+                    numPixels= 5000,
+                    dropNulls= True,
+                    geometries= True
+                )
+            )
+            # lstBandsNNull = ['blue_median', 'blue_median_wet', 'blue_median_dry']
+            # ptosTemp = ptosTemp.filter(ee.Filter.notNull(lstBandsNNull))
+            # print("numero de ptos controle ", ptosTemp.size().getInfo())
+            # insere informacoes em cada ft
+            # ptosTemp = ptosTemp.map(lambda feat : feat.set('year', nyear, 'GRID_ID', idGrade) )
+            shpAllFeat = shpAllFeat.merge(ptosTemp)
                 # sys.exit()
-            print(f"======  coleted rois from class {self.options['lsClasse']}  =======")
-        name_exp = 'rois_grade_' + str(idGrade) # + "_" + str(nyear)# + "_cc_" + str(nclass)
-    
+            # print(f"======  coleted rois from class {self.options['lsClasse']}  =======")
+            # sys.exit()
+        name_exp = 'rois_grade_' + str(idGrade) #  + "_" + str(nyear)# + "_cc_" + str(nclass)    
         # name_exp = 'rois_grade_' + str(idGrade)
         if askSize:
             sizeROIscol = ee.FeatureCollection(shpAllFeat).size().getInfo()
@@ -1008,6 +1035,13 @@ lstIdCode = [
     3579, 3580, 3581, 3582, 3583
 ]
 
+
+lstIdCode = [
+    3990, 3991, 3992, 4096, 4097, 4098, 4202, 4203, 4546, 2740, 2529, 2531, 
+    2537, 3372, 3373, 3376, 3157, 3471, 3472, 3473, 3475, 3885, 3886, 3887, 
+    3675, 3695, 3780, 3781, 3792, 3795, 3803, 3576]
+
+
 reprocessar = False
 if reprocessar:
     df = pd.read_csv('lista_gride_with_failsYearSaved.csv')
@@ -1020,7 +1054,7 @@ param = {
     'anoFinal': 2022,
     'changeCount': True,
     'numeroTask': 6,
-    'numeroLimit': 200,
+    'numeroLimit': 20,
     'conta': {
         '0': 'caatinga01',
         '20': 'caatinga02',
@@ -1057,8 +1091,8 @@ def gerenciador(cont):
             n= param['numeroTask'],
             return_list= True)
         
-        for lin in tarefas:   
-            print(str(lin))         
+        # for lin in tarefas:   
+        #     print(str(lin))         
             # relatorios.write(str(lin) + '\n')
     
     elif cont > param['numeroLimit']:
@@ -1068,7 +1102,7 @@ def gerenciador(cont):
 
 askingbySizeFC = False
 searchFeatSaved = False
-cont = 100
+cont = 0
 if param['changeCount']:
     cont = gerenciador(cont)
 
@@ -1084,8 +1118,8 @@ else:
     lstFeatAsset = []
 print(len(lstIdCode))
 # sys.exit()
-inicP = 400 # 0, 100
-endP = 800   # 100, 200, 300, 600
+inicP = 0 # 0, 100
+endP = 100   # 100, 200, 300, 600
 for cc, item in enumerate(lstIdCode[inicP:endP]):
     print(f"# {cc + 1 + inicP} loading geometry grade {item}")   
     if item not in lstFeatAsset:

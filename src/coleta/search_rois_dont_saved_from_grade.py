@@ -32,7 +32,7 @@ except:
 
 
 param = {
-    'asset_rois_grid': {'id' : 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_byGradesInd'},
+    'asset_rois_grid': {'id' : 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_byGradesAgrWat'},
     'asset_bacias_buffer' : 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/bacias_hidrografica_caatinga_49_regions',
     'anoInicial': 2016,
     'anoFinal': 2024,
