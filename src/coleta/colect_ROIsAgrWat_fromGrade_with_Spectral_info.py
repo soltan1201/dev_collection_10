@@ -39,10 +39,8 @@ class ClassMosaic_indexs_Spectral(object):
         'bnd_L': ['blue','green','red','nir','swir1','swir2'],
         'bnd_fraction': ['gv','npv','soil'],
         'biomas': ['CERRADO','CAATINGA','MATAATLANTICA'],
-        'classMapB': [3, 4, 5, 9, 12, 13, 15, 18, 19, 20, 21, 22, 23, 24, 25, 26, 29, 30, 31, 32, 33,
-                      36, 39, 40, 41, 46, 47, 48, 49, 50, 62],
-        'classNew':  [3, 4, 3, 3, 12, 12, 15, 18, 18, 18, 21, 22, 22, 22, 22, 33, 29, 22, 33, 12, 33,
-                      18, 18, 18, 18, 18, 18, 18,  4,  12, 18],
+        'classMapB': [3, 4, 5, 9, 12, 13, 15, 18, 19, 20, 21, 22, 23, 24, 25, 26, 29, 30, 31, 32, 33, 36, 39, 40, 41, 46, 47, 48, 49, 50, 62],
+        'classNew':  [3, 4, 3, 3, 12, 12, 15, 18, 18, 18, 21, 22, 22, 22, 22, 33, 29, 22, 33, 12, 33, 18, 18, 18, 18, 18, 18, 18,  4, 12, 18],
         'asset_bacias_buffer' : 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/bacias_hidrografica_caatinga_49_regions',
         'asset_grad': 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/basegrade30KMCaatinga',
         'assetMapbiomas90': 'projects/mapbiomas-public/assets/brazil/lulc/collection9/mapbiomas_collection90_integration_v1', 
@@ -50,13 +48,11 @@ class ClassMosaic_indexs_Spectral(object):
         'asset_mask_toSamples': 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/masks/mask_pixels_toSample', 
         'asset_output': 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/S2/ROIs/coleta2',
         # 'asset_output_grade': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_byGradesInd', 
-        'asset_output_grade': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_byGradesAgrWat', 
+        'asset_output_grade': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_byGradesIndV2', 
         # 'asset_output': 'projects/nexgenmap/SAMPLES/Caatinga',
         # Spectral bands selected
-        # 'lsClasse': [4, 3, 12, 15, 18, 21, 22, 33],
-        'lsClasse': [18,  33],
-        # 'lsPtos': [300, 500, 300, 350, 150, 100, 150, 300],
-        'lsPtos': [500, 500],
+        'lsClasse': [4, 3, 12, 15, 18, 21, 22, 33],
+        'lsPtos': [300, 500, 300, 350, 150, 100, 150, 300],
         "anoIntInit": 1985,
         "anoIntFin": 2024,
     }
@@ -176,6 +172,63 @@ class ClassMosaic_indexs_Spectral(object):
                                 .rename(['ndvi_median_dry']).toFloat()     
 
         return img.addBands(ndviImgY).addBands(ndviImgWet).addBands(ndviImgDry)
+
+    
+    def agregateBandsIndexNDBI(self, img):
+        
+        ndbiImgY = img.expression("float(b('swir1_median') - b('nir_median')) / (b('swir1_median') + b('nir_median'))")\
+                                .rename(['ndbi_median']).toFloat()    
+
+        ndbiImgWet = img.expression("float(b('swir1_median_wet') - b('nir_median_wet')) / (b('swir1_median_wet') + b('nir_median_wet'))")\
+                                .rename(['ndbi_median_wet']).toFloat()  
+
+        ndbiImgDry = img.expression("float(b('swir1_median_dry') - b('nir_median_dry')) / (b('swir1_median_dry') + b('nir_median_dry'))")\
+                                .rename(['ndbi_median_dry']).toFloat()     
+
+        return img.addBands(ndbiImgY).addBands(ndbiImgWet).addBands(ndbiImgDry)
+
+    
+    def agregateBandsIndexNDMI(self, img):
+        
+        ndmiImgY = img.expression("float(b('nir_median') - b('swir1_median')) / (b('nir_median') + b('swir1_median'))")\
+                                .rename(['ndmi_median']).toFloat()    
+
+        ndmiImgWet = img.expression("float(b('nir_median_wet') - b('swir1_median_wet')) / (b('nir_median_wet') + b('swir1_median_wet'))")\
+                                .rename(['ndmi_median_wet']).toFloat()  
+
+        ndmiImgDry = img.expression("float(b('nir_median_dry') - b('swir1_median_dry')) / (b('nir_median_dry') + b('swir1_median_dry'))")\
+                                .rename(['ndmi_median_dry']).toFloat()     
+
+        return img.addBands(ndmiImgY).addBands(ndmiImgWet).addBands(ndmiImgDry)
+
+    
+
+    def agregateBandsIndexNBR(self, img):
+        
+        nbrImgY = img.expression("float(b('nir_median') - b('swir1_median')) / (b('nir_median') + b('swir1_median'))")\
+                                .rename(['nbr_median']).toFloat()    
+
+        nbrImgWet = img.expression("float(b('nir_median_wet') - b('swir1_median_wet')) / (b('nir_median_wet') + b('swir1_median_wet'))")\
+                                .rename(['nbr_median_wet']).toFloat()  
+
+        nbrImgDry = img.expression("float(b('nir_median_dry') - b('swir1_median_dry')) / (b('nir_median_dry') + b('swir1_median_dry'))")\
+                                .rename(['nbr_median_dry']).toFloat()     
+
+        return img.addBands(nbrImgY).addBands(nbrImgWet).addBands(nbrImgDry)
+
+
+    def agregateBandsIndexNDTI(self, img):
+        
+        ndtiImgY = img.expression("float(b('swir1_median') - b('swir2_median')) / (b('swir1_median') + b('swir2_median'))")\
+                                .rename(['ndti_median']).toFloat()    
+
+        ndtiImgWet = img.expression("float(b('swir1_median_wet') - b('swir2_median_wet')) / (b('swir1_median_wet') + b('swir2_median_wet'))")\
+                                .rename(['ndti_median_wet']).toFloat()  
+
+        ndtiImgDry = img.expression("float(b('swir1_median_dry') - b('swir2_median_dry')) / (b('swir1_median_dry') + b('swir2_median_dry'))")\
+                                .rename(['ndti_median_dry']).toFloat()     
+
+        return img.addBands(ndtiImgY).addBands(ndtiImgWet).addBands(ndtiImgDry)
 
 
     def  agregateBandsIndexNDWI(self, img):
@@ -522,6 +575,43 @@ class ClassMosaic_indexs_Spectral(object):
         
         return img.addBands(osaviImgY).addBands(osaviImgWet).addBands(osaviImgDry)
 
+    # MSAVI	modifyed Soil-Adjusted Vegetation Index
+    # [ 2 * NIR + 1 - sqrt((2 * NIR + 1)^2 - 8 * (NIR-RED)) ]/2
+    def agregateBandsIndexMSAVI(self,img):    
+        msaviImgY = (img.expression(
+            "float((2 * b('nir_median') + 1 - sqrt((2 * b('nir_median') + 1) * (2 * b('nir_median') + 1) - 8 * (b('nir_median') - b('red_median'))))/2)")
+                .rename(['msavi_median']).toFloat() 
+        )
+
+        msaviImgWet = (img.expression(
+            "float((2 * b('nir_median_wet') + 1 - sqrt((2 * b('nir_median_wet') + 1) * (2 * b('nir_median_wet') + 1) - 8 * (b('nir_median_wet') - b('red_median_wet'))))/2)")
+                .rename(['msavi_median_wet']).toFloat() 
+        )
+
+        msaviImgDry = (img.expression(
+            "float((2 * b('nir_median_dry') + 1 - sqrt((2 * b('nir_median_dry') + 1) * (2 * b('nir_median_dry') + 1) - 8 * (b('nir_median_dry') - b('red_median_dry'))))/2)")
+                .rename(['msavi_median_dry']).toFloat()  
+        )      
+        
+        return img.addBands(msaviImgY).addBands(msaviImgWet).addBands(msaviImgDry)
+
+    # GSAVI	Optimized Soil-Adjusted Vegetation Index
+    # (NIR - GREEN) /(0.5 + NIR + GREEN) * 1.5) 
+    def agregateBandsIndexGSAVI(self,img):    
+        gsaviImgY = img.expression(
+            "float(b('nir_median') - b('green_median')) / ((0.5 + b('nir_median') + b('green_median')) * 1.5)")\
+                .rename(['gsavi_median']).toFloat() 
+
+        gsaviImgWet = img.expression(
+            "float(b('nir_median_wet') - b('green_median_wet')) / ((0.5 + b('nir_median_wet') + b('green_median_wet')) * 1.5)")\
+                .rename(['gsavi_median_wet']).toFloat() 
+
+        gsaviImgDry = img.expression(
+            "float(b('nir_median_dry') - b('green_median_dry')) / ((0.5 + b('nir_median_dry') + b('green_median_dry')) * 1.5)")\
+                .rename(['gsavi_median_dry']).toFloat()        
+        
+        return img.addBands(gsaviImgY).addBands(gsaviImgWet).addBands(gsaviImgDry)
+
     # Normalized Difference Red/Green Redness Index  RI
     def agregateBandsIndexRI(self, img):        
         riImgY = img.expression(
@@ -628,9 +718,9 @@ class ClassMosaic_indexs_Spectral(object):
 
         priImgDry = img.expression(
                                 "float((b('green_median') - b('blue_median')) / (b('green_median') + b('blue_median')))"
-                            ).rename(['pri_median'])   
+                            ).rename(['pri_median_dry'])   
         spriImgDry =   priImgDry.expression(
-                                "float((b('pri_median') + 1) / 2)").rename(['spri_median']).toFloat()
+                                "float((b('pri_median_dry') + 1) / 2)").rename(['spri_median']).toFloat()
     
         return img.addBands(spriImgY).addBands(spriImgWet).addBands(spriImgDry)
     
@@ -638,17 +728,34 @@ class ClassMosaic_indexs_Spectral(object):
     def agregateBandsIndexCO2Flux(self, img):        
         ndviImg = img.expression(
                             "float(b('nir_median') - b('swir2_median')) / (b('nir_median') + b('swir2_median'))"
-                        ).rename(['ndvi']).toFloat() 
-        
+                        ).rename(['ndvi_median']).toFloat() 
+        ndviImgWet = img.expression(
+                            "float(b('nir_median_wet') - b('swir2_median_wet')) / (b('nir_median_wet') + b('swir2_median_wet'))"
+                        ).rename(['ndvi_median_wet']).toFloat() 
+        ndviImgDry = img.expression(
+                            "float(b('nir_median_dry') - b('swir2_median_dry')) / (b('nir_median_dry') + b('swir2_median_dry'))"
+                        ).rename(['ndvi_median_dry']).toFloat() 
         priImg = img.expression(
                             "float((b('green_median') - b('blue_median')) / (b('green_median') + b('blue_median')))"
                         ).rename(['pri_median']).toFloat()   
+        priImgWet = img.expression(
+                            "float((b('green_median_wet') - b('blue_median_wet')) / (b('green_median_wet') + b('blue_median_wet')))"
+                        ).rename(['pri_median_wet']).toFloat()  
+        priImgDry = img.expression(
+                            "float((b('green_median_dry') - b('blue_median_dry')) / (b('green_median_dry') + b('blue_median_dry')))"
+                        ).rename(['pri_median_dry']).toFloat()  
         spriImg =   priImg.expression(
                                 "float((b('pri_median') + 1) / 2)").rename(['spri_median']).toFloat()
+        spriImgWet =   priImgWet.expression(
+                                "float((b('pri_median_wet') + 1) / 2)").rename(['spri_median_wet']).toFloat()
+        spriImgDry =   priImgDry.expression(
+                                "float((b('pri_median_dry') + 1) / 2)").rename(['spri_median_dry']).toFloat()
 
         co2FluxImg = ndviImg.multiply(spriImg).rename(['co2flux_median'])   
+        co2FluxImgWet = ndviImgWet.multiply(spriImgWet).rename(['co2flux_median_wet']) 
+        co2FluxImgDry = ndviImgDry.multiply(spriImgDry).rename(['co2flux_median_dry']) 
         
-        return img.addBands(co2FluxImg)
+        return img.addBands(co2FluxImg).addBands(co2FluxImgWet).addBands(co2FluxImgDry)
 
 
     def agregateBandsTexturasGLCM(self, img):        
@@ -677,7 +784,9 @@ class ClassMosaic_indexs_Spectral(object):
                 "gcvi","gemi","cvi","gli","shape","afvi",
                 "avi","bsi","brba","dswi5","lswi","mbi","ui",
                 "osavi","ri","brightness","wetness","gvmi",
-                "nir_contrast","red_contrast", 'nddi',"ndvi"
+                "nir_contrast","red_contrast", 'nddi',"ndvi",
+                "ndmi","msavi", "gsavi","ndbi","nbr","ndti", 
+                'co2flux'
             ]        
 
         imageW = self.agregateBandsIndexEVI(imagem)
@@ -703,11 +812,18 @@ class ClassMosaic_indexs_Spectral(object):
         imageW = self.agregateBandsIndexRI(imageW) 
         imageW = self.agregateBandsIndexOSAVI(imageW)  #  
         imageW = self.agregateBandsIndexNDDI(imageW)   
+        imageW = self.agregateBandsIndexNDMI(imageW) 
         imageW = self.agregateBandsIndexwetness(imageW)   #   
         imageW = self.agregateBandsIndexBrightness(imageW)  #  
         imageW = self.agregateBandsIndexGVMI(imageW)     
         imageW = self.agregateBandsTexturasGLCM(imageW)     #
         imageW = self.addSlopeAndHilshade(imageW)    #
+        imageW = self.agregateBandsIndexNDBI(imageW)   #   
+        imageW = self.agregateBandsIndexMSAVI(imageW)  #  
+        imageW = self.agregateBandsIndexGSAVI(imageW)     
+        imageW = self.agregateBandsIndexNBR(imageW)     #
+        imageW = self.agregateBandsIndexNDTI(imageW) 
+        imageW = self.agregateBandsIndexCO2Flux(imageW) 
 
         return imageW  
 
@@ -865,7 +981,8 @@ class ClassMosaic_indexs_Spectral(object):
             mosaicoBuilded = self.make_mosaicofromIntervalo(imgColfiltered, nyear) 
             # print("metadado bandas names ", mosaicoBuilded.bandNames().getInfo())
 
-            print("----- calculado todos os 102 indices ---------------------")
+            print("----- calculado todos os old(102) now 123 indices ---------------------")
+
             img_recMosaicnewB = self.CalculateIndice(mosaicoBuilded.clip(oneGrade))
             # bndAdd = img_recMosaicnewB.bandNames().getInfo()            
             # print(f"know bands names Index {len(bndAdd)}")
@@ -968,78 +1085,113 @@ shp_grid = ee.FeatureCollection(asset_grid)
 # lstIds = shp_grid.reduceColumns(ee.Reducer.toList(), ['indice']).get('list').getInfo()
 # print("   ", lstIds)
 
+# lstIdCode = [
+#     3990, 3991, 3992, 3993, 3994, 3995, 3996, 3997, 3998, 3999, 4000, 4096, 
+#     4097, 4098, 4099, 4100, 4101, 4102, 4103, 4104, 4105, 4106, 4107, 4108, 
+#     4109, 4110, 4111, 4112, 4113, 4114, 4115, 4116, 4117, 4118, 4119, 4120, 
+#     4121, 4122, 4123, 4414, 4415, 4416, 4417, 4418, 4419, 4420, 4421, 4422, 
+#     4423, 4424, 4425, 4426, 4427, 4428, 4429, 4430, 4431, 4432, 4433, 4434,
+#     4435, 4436, 4437, 4438, 4439, 4440, 4202, 4203, 4204, 4205, 4206, 4207, 
+#     4208, 4209, 4210, 4211, 4212, 4213, 4214, 4215, 4216, 4217, 4218, 4219, 
+#     4220, 4221, 4222, 4223, 4224, 4225, 4226, 4227, 4228, 4001, 4002, 4003, 
+#     4004, 4005, 4006, 4007, 4008, 4009, 4010, 4011, 4012, 4013, 4014, 4015, 
+#     4016, 4308, 4309, 4310, 4311, 4312, 4313, 4314, 4315, 4316, 4317, 4318, 
+#     4319, 4320, 4321, 4322, 4323, 4324, 4325, 4326, 4327, 4328, 4329, 4330, 
+#     4331, 4332, 4333, 4334, 4626, 4627, 4628, 4629, 4630, 4631, 4632, 4633, 
+#     4634, 4635, 4636, 4637, 4638, 4639, 4640, 4641, 4642, 4643, 4644, 4645, 
+#     4646, 4647, 4648, 4649, 4650, 4651, 4942, 4943, 4944, 4945, 4946, 4947, 
+#     4948, 4949, 4950, 4951, 4952, 4953, 4954, 4955, 4956, 4957, 4958, 4959, 
+#     4960, 4961, 4962, 4731, 4732, 4733, 4734, 4735, 4736, 4737, 4738, 4739, 
+#     4740, 4741, 4742, 4743, 4744, 4745, 4746, 4747, 4748, 4749, 4750, 4751, 
+#     4752, 4753, 4754, 4755, 4756, 4520, 4521, 4522, 4523, 4524, 4525, 4526, 
+#     4527, 4528, 4529, 4530, 4531, 4532, 4533, 4534, 4535, 4536, 4537, 4538, 
+#     4539, 4540, 4541, 4542, 4543, 4544, 4545, 4546, 4837, 4838, 4839, 4840, 
+#     4841, 4842, 4843, 4844, 4845, 4846, 4847, 4848, 4849, 4850, 4851, 4852, 
+#     4853, 4854, 4855, 4856, 4857, 5376, 5377, 5378, 5379, 5380, 5381, 5382, 
+#     5383, 5384, 5385, 5154, 5155, 5156, 5157, 5158, 5159, 5160, 5161, 5162, 
+#     5163, 5164, 5165, 5166, 5167, 5168, 5169, 5170, 5171, 5172, 5173, 5174, 
+#     5175, 5471, 5472, 5473, 5474, 5475, 5476, 5477, 5478, 5479, 5480, 5481, 
+#     5482, 5483, 5484, 5485, 5486, 5487, 5488, 5489, 5490, 5261, 5262, 5263, 
+#     5264, 5265, 5266, 5267, 5268, 5269, 5270, 5271, 5272, 5273, 5274, 5275, 
+#     5276, 5277, 5278, 5279, 5280, 5048, 5049, 5050, 5051, 5052, 5053, 5054, 
+#     5055, 5056, 5057, 5058, 5059, 5060, 5061, 5062, 5063, 5064, 5065, 5066, 
+#     5067, 5366, 5367, 5368, 5369, 5370, 5371, 5372, 5373, 5374, 5375, 5901, 
+#     5902, 5903, 5904, 5905, 5906, 5907, 5908, 5683, 5684, 5686, 5687, 5688, 
+#     5689, 5690, 5691, 5692, 5693, 5694, 5695, 5696, 5697, 5698, 5699, 5700, 
+#     5792, 5793, 5794, 5795, 5796, 5797, 5798, 5799, 5800, 5801, 5802, 5803, 
+#     5804, 5805, 5576, 5577, 5578, 5579, 5580, 5581, 5582, 5583, 5584, 5585, 
+#     5586, 5587, 5588, 5589, 5590, 5591, 5592, 5593, 5594, 5595, 6217, 6218, 
+#     6219, 6220, 6221, 6222, 6006, 6007, 6008, 6009, 6010, 6011, 6012, 6013, 
+#     6323, 6324, 6325, 6326, 6327, 6112, 6113, 6114, 6115, 6116, 6117, 6118, 
+#     2322, 2323, 2324, 2325, 2326, 2327, 2328, 2329, 2425, 2426, 2427, 2428, 
+#     2429, 2430, 2431, 2432, 2433, 2434, 2220, 2223, 2224, 2840, 2841, 2842, 
+#     2843, 2844, 2845, 2846, 2847, 2848, 2849, 2850, 2851, 2852, 2853, 2854, 
+#     2855, 2856, 2633, 2634, 2635, 2636, 2637, 2638, 2639, 2640, 2641, 2642, 
+#     2643, 2644, 2645, 2646, 2941, 2942, 2943, 2944, 2945, 2946, 2947, 2948, 
+#     2949, 2950, 2951, 2952, 2953, 2954, 2955, 2956, 2957, 2958, 2959, 2960, 
+#     2737, 2738, 2739, 2740, 2741, 2742, 2743, 2744, 2745, 2746, 2747, 2748, 
+#     2749, 2750, 2751, 2529, 2530, 2531, 2532, 2533, 2534, 2535, 2536, 2537, 
+#     2538, 2539, 2540, 3360, 3361, 3362, 3363, 3364, 3365, 3366, 3367, 3368, 
+#     3369, 3370, 3371, 3372, 3373, 3374, 3375, 3376, 3377, 3378, 3379, 3380, 
+#     3381, 3382, 3383, 3150, 3151, 3152, 3153, 3154, 3155, 3156, 3157, 3158, 
+#     3159, 3160, 3161, 3162, 3163, 3164, 3165, 3166, 3167, 3168, 3169, 3170, 
+#     3171, 3465, 3466, 3467, 3468, 3469, 3470, 3471, 3472, 3473, 3474, 3475, 
+#     3476, 3477, 3478, 3479, 3480, 3481, 3482, 3483, 3484, 3485, 3486, 3487, 
+#     3488, 3489, 3255, 3256, 3257, 3258, 3259, 3260, 3261, 3262, 3263, 3264, 
+#     3265, 3266, 3267, 3268, 3269, 3270, 3271, 3272, 3273, 3274, 3275, 3276, 
+#     3277, 3278, 3046, 3047, 3048, 3049, 3050, 3051, 3052, 3053, 3054, 3055, 
+#     3056, 3057, 3058, 3059, 3060, 3061, 3062, 3063, 3064, 3584, 3585, 3586, 
+#     3587, 3588, 3589, 3590, 3591, 3592, 3593, 3594, 3885, 3886, 3887, 3888, 
+#     3889, 3890, 3891, 3892, 3893, 3894, 3895, 3896, 3897, 3898, 3899, 3900, 
+#     3901, 3902, 3903, 3904, 3905, 3906, 3907, 3908, 3909, 3910, 3911, 3675, 
+#     3676, 3677, 3678, 3679, 3680, 3681, 3682, 3683, 3684, 3685, 3686, 3687, 
+#     3688, 3689, 3690, 3691, 3692, 3693, 3694, 3695, 3696, 3697, 3698, 3699, 
+#     3700, 3780, 3781, 3782, 3783, 3784, 3785, 3786, 3787, 3788, 3789, 3790, 
+#     3791, 3792, 3793, 3794, 3795, 3796, 3797, 3798, 3799, 3800, 3801, 3802, 
+#     3803, 3804, 3805, 3570, 3571, 3572, 3573, 3574, 3575, 3576, 3577, 3578, 
+#     3579, 3580, 3581, 3582, 3583
+# ]
+
+
 lstIdCode = [
-    3990, 3991, 3992, 3993, 3994, 3995, 3996, 3997, 3998, 3999, 4000, 4096, 
-    4097, 4098, 4099, 4100, 4101, 4102, 4103, 4104, 4105, 4106, 4107, 4108, 
-    4109, 4110, 4111, 4112, 4113, 4114, 4115, 4116, 4117, 4118, 4119, 4120, 
-    4121, 4122, 4123, 4414, 4415, 4416, 4417, 4418, 4419, 4420, 4421, 4422, 
-    4423, 4424, 4425, 4426, 4427, 4428, 4429, 4430, 4431, 4432, 4433, 4434,
-    4435, 4436, 4437, 4438, 4439, 4440, 4202, 4203, 4204, 4205, 4206, 4207, 
-    4208, 4209, 4210, 4211, 4212, 4213, 4214, 4215, 4216, 4217, 4218, 4219, 
-    4220, 4221, 4222, 4223, 4224, 4225, 4226, 4227, 4228, 4001, 4002, 4003, 
-    4004, 4005, 4006, 4007, 4008, 4009, 4010, 4011, 4012, 4013, 4014, 4015, 
-    4016, 4308, 4309, 4310, 4311, 4312, 4313, 4314, 4315, 4316, 4317, 4318, 
-    4319, 4320, 4321, 4322, 4323, 4324, 4325, 4326, 4327, 4328, 4329, 4330, 
-    4331, 4332, 4333, 4334, 4626, 4627, 4628, 4629, 4630, 4631, 4632, 4633, 
-    4634, 4635, 4636, 4637, 4638, 4639, 4640, 4641, 4642, 4643, 4644, 4645, 
-    4646, 4647, 4648, 4649, 4650, 4651, 4942, 4943, 4944, 4945, 4946, 4947, 
-    4948, 4949, 4950, 4951, 4952, 4953, 4954, 4955, 4956, 4957, 4958, 4959, 
-    4960, 4961, 4962, 4731, 4732, 4733, 4734, 4735, 4736, 4737, 4738, 4739, 
-    4740, 4741, 4742, 4743, 4744, 4745, 4746, 4747, 4748, 4749, 4750, 4751, 
-    4752, 4753, 4754, 4755, 4756, 4520, 4521, 4522, 4523, 4524, 4525, 4526, 
-    4527, 4528, 4529, 4530, 4531, 4532, 4533, 4534, 4535, 4536, 4537, 4538, 
-    4539, 4540, 4541, 4542, 4543, 4544, 4545, 4546, 4837, 4838, 4839, 4840, 
-    4841, 4842, 4843, 4844, 4845, 4846, 4847, 4848, 4849, 4850, 4851, 4852, 
-    4853, 4854, 4855, 4856, 4857, 5376, 5377, 5378, 5379, 5380, 5381, 5382, 
-    5383, 5384, 5385, 5154, 5155, 5156, 5157, 5158, 5159, 5160, 5161, 5162, 
-    5163, 5164, 5165, 5166, 5167, 5168, 5169, 5170, 5171, 5172, 5173, 5174, 
-    5175, 5471, 5472, 5473, 5474, 5475, 5476, 5477, 5478, 5479, 5480, 5481, 
-    5482, 5483, 5484, 5485, 5486, 5487, 5488, 5489, 5490, 5261, 5262, 5263, 
-    5264, 5265, 5266, 5267, 5268, 5269, 5270, 5271, 5272, 5273, 5274, 5275, 
-    5276, 5277, 5278, 5279, 5280, 5048, 5049, 5050, 5051, 5052, 5053, 5054, 
-    5055, 5056, 5057, 5058, 5059, 5060, 5061, 5062, 5063, 5064, 5065, 5066, 
-    5067, 5366, 5367, 5368, 5369, 5370, 5371, 5372, 5373, 5374, 5375, 5901, 
-    5902, 5903, 5904, 5905, 5906, 5907, 5908, 5683, 5684, 5686, 5687, 5688, 
-    5689, 5690, 5691, 5692, 5693, 5694, 5695, 5696, 5697, 5698, 5699, 5700, 
-    5792, 5793, 5794, 5795, 5796, 5797, 5798, 5799, 5800, 5801, 5802, 5803, 
-    5804, 5805, 5576, 5577, 5578, 5579, 5580, 5581, 5582, 5583, 5584, 5585, 
-    5586, 5587, 5588, 5589, 5590, 5591, 5592, 5593, 5594, 5595, 6217, 6218, 
-    6219, 6220, 6221, 6222, 6006, 6007, 6008, 6009, 6010, 6011, 6012, 6013, 
-    6323, 6324, 6325, 6326, 6327, 6112, 6113, 6114, 6115, 6116, 6117, 6118, 
-    2322, 2323, 2324, 2325, 2326, 2327, 2328, 2329, 2425, 2426, 2427, 2428, 
-    2429, 2430, 2431, 2432, 2433, 2434, 2220, 2223, 2224, 2840, 2841, 2842, 
-    2843, 2844, 2845, 2846, 2847, 2848, 2849, 2850, 2851, 2852, 2853, 2854, 
-    2855, 2856, 2633, 2634, 2635, 2636, 2637, 2638, 2639, 2640, 2641, 2642, 
-    2643, 2644, 2645, 2646, 2941, 2942, 2943, 2944, 2945, 2946, 2947, 2948, 
-    2949, 2950, 2951, 2952, 2953, 2954, 2955, 2956, 2957, 2958, 2959, 2960, 
-    2737, 2738, 2739, 2740, 2741, 2742, 2743, 2744, 2745, 2746, 2747, 2748, 
-    2749, 2750, 2751, 2529, 2530, 2531, 2532, 2533, 2534, 2535, 2536, 2537, 
-    2538, 2539, 2540, 3360, 3361, 3362, 3363, 3364, 3365, 3366, 3367, 3368, 
+    3992, 4098, 4203, 4732, 4733, 4736, 4737, 4738, 4739, 4740, 4741, 4742, 
+    4743, 4744, 4745, 4746, 4747, 4748, 4749, 4750, 4751, 4752, 4753, 4754, 
+    4755, 4521, 4522, 4523, 4524, 4525, 4526, 4527, 4528, 4529, 4530, 4531, 
+    4532, 4533, 4534, 4535, 4536, 4537, 4538, 4539, 4540, 4543, 4544, 4545, 
+    4546, 4837, 4838, 4839, 4840, 4841, 4842, 4843, 4844, 4845, 4846, 4847, 
+    4848, 4849, 4850, 4851, 4852, 4855, 4856, 4857, 5376, 5377, 5378, 5379, 
+    5380, 5381, 5382, 5383, 5384, 5385, 5154, 5155, 5156, 5157, 5158, 5159, 
+    5160, 5163, 5164, 5165, 5166, 5167, 5168, 5169, 5170, 5171, 5172, 5173, 
+    5174, 5175, 5471, 5472, 5473, 5474, 5475, 5476, 5477, 5480, 5481, 5694, 
+    5695, 5696, 5697, 5698, 5699, 5700, 5792, 5793, 5794, 5795, 5798, 5799, 
+    5800, 5801, 5802, 5803, 5804, 5805, 5576, 5577, 5578, 5579, 5580, 5581, 
+    5582, 5583, 5584, 5585, 5586, 5587, 5590, 5591, 5592, 5593, 5594, 5595, 
+    6217, 6218, 6219, 6220, 6221, 6222, 6006, 6007, 6008, 6009, 6010, 6011, 
+    6012, 6013, 6325, 6326, 6327, 6112, 6113, 6114, 6115, 6116, 6117, 6118, 
+    2322, 2323, 2324, 2325, 2326, 2327, 2328, 2329, 2425, 2426, 2429, 2430, 
+    2431, 2432, 2433, 2434, 2220, 2223, 2224, 2840, 2841, 2842, 2843, 2844, 
+    2845, 2846, 2847, 2848, 2849, 2850, 2853, 2854, 2855, 2856, 2633, 2634, 
+    2635, 2636, 2637, 2638, 2639, 2640, 2641, 2642, 2643, 2644, 2645, 2646, 
+    2941, 2942, 2947, 2948, 2949, 2950, 2951, 2952, 2953, 2954, 2955, 2956, 
+    2957, 2958, 2959, 2960, 2737, 2738, 2739, 2740, 2741, 2742, 2745, 2746, 
+    2747, 2748, 2749, 2750, 2751, 2529, 2530, 2531, 2532, 2533, 2534, 2535, 
+    2536, 2537, 2538, 2539, 2540, 3360, 3363, 3364, 3365, 3366, 3367, 3368, 
     3369, 3370, 3371, 3372, 3373, 3374, 3375, 3376, 3377, 3378, 3379, 3380, 
-    3381, 3382, 3383, 3150, 3151, 3152, 3153, 3154, 3155, 3156, 3157, 3158, 
-    3159, 3160, 3161, 3162, 3163, 3164, 3165, 3166, 3167, 3168, 3169, 3170, 
-    3171, 3465, 3466, 3467, 3468, 3469, 3470, 3471, 3472, 3473, 3474, 3475, 
-    3476, 3477, 3478, 3479, 3480, 3481, 3482, 3483, 3484, 3485, 3486, 3487, 
-    3488, 3489, 3255, 3256, 3257, 3258, 3259, 3260, 3261, 3262, 3263, 3264, 
-    3265, 3266, 3267, 3268, 3269, 3270, 3271, 3272, 3273, 3274, 3275, 3276, 
-    3277, 3278, 3046, 3047, 3048, 3049, 3050, 3051, 3052, 3053, 3054, 3055, 
-    3056, 3057, 3058, 3059, 3060, 3061, 3062, 3063, 3064, 3584, 3585, 3586, 
-    3587, 3588, 3589, 3590, 3591, 3592, 3593, 3594, 3885, 3886, 3887, 3888, 
-    3889, 3890, 3891, 3892, 3893, 3894, 3895, 3896, 3897, 3898, 3899, 3900, 
-    3901, 3902, 3903, 3904, 3905, 3906, 3907, 3908, 3909, 3910, 3911, 3675, 
-    3676, 3677, 3678, 3679, 3680, 3681, 3682, 3683, 3684, 3685, 3686, 3687, 
-    3688, 3689, 3690, 3691, 3692, 3693, 3694, 3695, 3696, 3697, 3698, 3699, 
-    3700, 3780, 3781, 3782, 3783, 3784, 3785, 3786, 3787, 3788, 3789, 3790, 
-    3791, 3792, 3793, 3794, 3795, 3796, 3797, 3798, 3799, 3800, 3801, 3802, 
-    3803, 3804, 3805, 3570, 3571, 3572, 3573, 3574, 3575, 3576, 3577, 3578, 
-    3579, 3580, 3581, 3582, 3583
-]
+    3381, 3382, 3151, 3152, 3153, 3154, 3155, 3156, 3157, 3158, 3159, 3160, 
+    3161, 3162, 3163, 3164, 3165, 3166, 3167, 3168, 3169, 3170, 3466, 3467, 
+    3468, 3469, 3470, 3471, 3472, 3473, 3474, 3475, 3476, 3477, 3478, 3479, 
+    3480, 3481, 3482, 3483, 3484, 3485, 3488, 3489, 3255, 3256, 3257, 3258, 
+    3259, 3260, 3263, 3264, 3265, 3266, 3267, 3268, 3269, 3270, 3271, 3272, 
+    3275, 3276, 3277, 3278, 3046, 3047, 3048, 3049, 3052, 3053, 3054, 3055, 
+    3056, 3057, 3058, 3059, 3060, 3061, 3064, 3584, 3585, 3586, 3587, 3588, 
+    3589, 3590, 3593, 3594, 3885, 3886, 3887, 3888, 3889, 3890, 3891, 3892, 
+    3895, 3896, 3897, 3898, 3899, 3900, 3901, 3902, 3905, 3906, 3907, 3908, 
+    3909, 3910, 3911, 3675, 3676, 3677, 3680, 3681, 3682, 3683, 3684, 3685, 
+    3686, 3687, 3690, 3691, 3692, 3693, 3694, 3695, 3696, 3697, 3698, 3699, 
+    3781, 3782, 3783, 3784, 3785, 3786, 3787, 3788, 3791, 3792, 3793, 3794, 
+    3795, 3796, 3797, 3798, 3799, 3800, 3803, 3804, 3805, 3570, 3571, 3572, 
+    3573, 3574, 3577, 3578, 3579, 3580, 3581, 3582, 3583]
 
-
-lstIdCode = [
-    3990, 3991, 3992, 4096, 4097, 4098, 4202, 4203, 4546, 2740, 2529, 2531, 
-    2537, 3372, 3373, 3376, 3157, 3471, 3472, 3473, 3475, 3885, 3886, 3887, 
-    3675, 3695, 3780, 3781, 3792, 3795, 3803, 3576]
 
 
 reprocessar = False
@@ -1102,7 +1254,7 @@ def gerenciador(cont):
 
 askingbySizeFC = False
 searchFeatSaved = False
-cont = 0
+cont = 110
 if param['changeCount']:
     cont = gerenciador(cont)
 
@@ -1118,8 +1270,8 @@ else:
     lstFeatAsset = []
 print(len(lstIdCode))
 # sys.exit()
-inicP = 0 # 0, 100
-endP = 100   # 100, 200, 300, 600
+inicP = 400 # 0, 100
+endP = 500   # 100, 200, 300, 600
 for cc, item in enumerate(lstIdCode[inicP:endP]):
     print(f"# {cc + 1 + inicP} loading geometry grade {item}")   
     if item not in lstFeatAsset:

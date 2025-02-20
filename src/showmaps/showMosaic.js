@@ -16,8 +16,9 @@ var visualizar = {
 var assetMosaic = 'projects/nexgenmap/MapBiomas2/LANDSAT/BRAZIL/mosaics-2';
 var asset_bacias = "projects/mapbiomas-arida/ALERTAS/auxiliar/bacias_hidrografica_caatinga";
 var lstSat = ["l5","l7","l8"];
+var lstBiomas = ['CERRADO','CAATINGA','MATAATLANTICA']
 var imgCol = ee.ImageCollection(assetMosaic)
-                  .filter(ee.Filter.eq('biome', 'CAATINGA'))
+                  .filter(ee.Filter.inList('biome', lstBiomas))
                   .filter(ee.Filter.inList('satellite', lstSat));
 
 print("Lista das primeiras 10 imagens ", imgCol.limit(10));
@@ -37,3 +38,4 @@ var limitBacia = ee.FeatureCollection(asset_bacias);
 Map.addLayer(limitBacia, {color: 'green'}, 'limit Bacia');
 Map.addLayer(imgCol.filter(ee.Filter.eq('year', 2020)), visualizar.visMosaic, "mosaic 2020");
 Map.addLayer(imgCol.filter(ee.Filter.eq('year', 2023)), visualizar.visMosaic, "mosaic 2023");
+Map.addLayer(imgCol.filter(ee.Filter.eq('year', 2024)), visualizar.visMosaic, "mosaic 2024");

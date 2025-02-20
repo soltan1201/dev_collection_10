@@ -1,3 +1,22 @@
 link com as contas de mapbiomas 
 https://docs.google.com/spreadsheets/d/12W9jelblCCtF9xl9FVa_udPf6L4eeFIqpVHubEiNM7Y/edit?usp=sharing
 
+
+uso do filtro de trajetoria 
+https://docs.google.com/presentation/d/1c7P10TGL4wLRBhe3ML02RrwCgLO1my-LhPwBQg6Ln8w/edit#slide=id.g2d9630a10e1_0_105
+scripts de uso 
+https://code.earthengine.google.com/8106e44e3019ef621e9b527b4df64769
+
+
+
+códigos para mostrar os asset dentro o folder 
+earthengine ls -r projects/mapbiomas-public/assets/brazil/lulc
+
+
+lstBandas 
+know bands names Index 123
+   ['blue_median', 'green_median', 'red_median', 'nir_median', 'swir1_median', 'swir2_median', 'blue_median_dry', 'green_median_dry', 'red_median_dry', 'nir_median_dry', 'swir1_median_dry', 'swir2_median_dry', 'blue_median_wet', 'green_median_wet', 'red_median_wet', 'nir_median_wet', 'swir1_median_wet', 'swir2_median_wet', 'evi_median', 'evi_median_wet', 'evi_median_dry', 'ndvi_median', 'ndvi_median_wet', 'ndvi_median_dry', 'ratio_median', 'ratio_median_wet', 'ratio_median_dry', 'rvi_median', 'rvi_median_wet', 'rvi_median_1', 'ndwi_median', 'ndwi_median_wet', 'ndwi_median_dry', 'awei_median', 'awei_median_wet', 'awei_median_dry', 'iia_median', 'iia_median_wet', 'iia_median_dry', 'gcvi_median', 'gcvi_median_wet', 'gcvi_median_dry', 'gemi_median', 'gemi_median_wet', 'gemi_median_dry', 'cvi_median', 'cvi_median_wet', 'cvi_median_dry', 'gli_median', 'gli_median_wet', 'gli_median_dry', 'shape_median', 'shape_median_wet', 'shape_median_dry', 'afvi_median', 'afvi_median_wet', 'afvi_median_dry', 'avi_median', 'avi_median_wet', 'avi_median_dry', 'bsi_median', 'bsi_median_1', 'bsi_median_2', 'brba_median', 'brba_median_wet', 'brba_median_dry', 'dswi5_median', 'dswi5_median_wet', 'dswi5_median_dry', 'lswi_median', 'lswi_median_wet', 'lswi_median_dry', 'mbi_median', 'mbi_median_wet', 'mbi_median_dry', 'ui_median', 'ui_median_wet', 'ui_median_dry', 'ri_median', 'ri_median_wet', 'ri_median_dry', 'osavi_median', 'osavi_median_wet', 'osavi_median_dry', 'nddi_median', 'nddi_median_wet', 'nddi_median_dry', 'ndmi_median', 'ndmi_median_wet', 'ndmi_median_dry', 'wetness_median', 'wetness_median_wet', 'wetness_median_dry', 'brightness_median', 'brightness_median_wet', 'brightness_median_dry', 'gvmi_median', 'gvmi_median_wet', 'gvmi_median_dry', 'nir_median_contrast', 'red_median_contrast', 'nir_median_dry_contrast', 'red_median_dry_contrast', 'slope', 'hillshade', 'ndbi_median', 'ndbi_median_wet', 'ndbi_median_dry', 'msavi_median', 'msavi_median_wet', 'msavi_median_dry', 'gsavi_median', 'gsavi_median_wet', 'gsavi_median_dry', 'nbr_median', 'nbr_median_wet', 'nbr_median_dry', 'ndti_median', 'ndti_median_wet', 'ndti_median_dry', 'co2flux_median', 'co2flux_median_wet', 'co2flux_median_dry']
+
+
+calculo das bordas pernambuco 
+https://code.earthengine.google.com/25a9d771fcbecfce0246335126f5113e

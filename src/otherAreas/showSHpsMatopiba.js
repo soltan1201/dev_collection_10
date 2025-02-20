@@ -71,7 +71,9 @@ var outlineMat = ee.Image().byte().paint({
 var outlineEstados = ee.Image().byte().paint({
     featureCollection: estaMatopiba,  color: 1, width: 1.5 });
 var outlineCaat = ee.Image().byte().paint({
-    featureCollection: shpCatinga,  color: 1, width: 1.5 });    
+    featureCollection: shpCatinga, color: 1, width: 1.5
+});
+        
 Map.addLayer(outlineEstados, {palette: 'green'}, 'estadosMatopiba');
 Map.addLayer(outlineMat, {palette: 'black'}, 'shpMatopiba');
 Map.addLayer(outlineCaat, {palette: '#0052ff'}, 'shpCaatinga');
