@@ -40,7 +40,7 @@ param = {
     'asset_rois_grid1': {'id' : 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_byGradesAgrWat'},
     # 'asset_rois_grid2': {'id' : 'projects/nexgenmap/SAMPLES/Caatinga/ROIs'},
     'asset_bacias_buffer' : 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/bacias_hidrografica_caatinga_49_regions',
-    'asset_output': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_merged_Indall',
+    'asset_output': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_merged_IndAll',
     'asset_roi_basins': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_merged_Ind',
     'asset_grad' : 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/basegrade30KMCaatinga',
     'anoInicial': 2016,
@@ -138,8 +138,8 @@ listaNameBacias = [
     '7618', '7561', '755', '7617', '7564', '761111', '761112', 
     '7741', '7422', '76116', '7761', '7671', '7615', '7411', 
     '7764', '757', '771', '7712', '766', '7746', '753', '764', 
-    '7541', '7721', '772', '7619', '7443', '765', '7544', '7438', 
-    '763', '7591', '7592', '7622', '746'
+    '7541', '7721', '772', '7619', '7443', '765', '7544', 
+    '7438', '763', '7591', '7592', '7622', '746'
 ]
 getdictGrid = False
 printarNomeLoaded = True

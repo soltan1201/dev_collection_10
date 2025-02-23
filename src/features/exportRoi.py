@@ -69,7 +69,14 @@ nameBacias = [
     '7541', '7721', '772', '7619', '7443', '765', '7544', '7438', 
     '763', '7591', '7592', '7622', '746'
 ]
+# vizinhos selecionados para exportar
+# nameBacias = [
+#     "7438","752","7584","761111","7619","765","7712","773","7746",
+#     "7591", "7615"
+# ]
 
+
+print(f"processing {len(nameBacias)} bacias ")
 #========================METODOS=============================
 def GetPolygonsfromFolder(dictAsset):
     
@@ -88,29 +95,8 @@ def GetPolygonsfromFolder(dictAsset):
 
 
 #========================METODOS=============================
-# def gerenciador(cont, param):
-#     #0, 18, 36, 54]
-#     #=====================================#
-#     # gerenciador de contas para controlar# 
-#     # processos task no gee               #
-#     #=====================================#
-#     numberofChange = [kk for kk in param['conta'].keys()]
-
-#     if str(cont) in numberofChange:
-        
-#         gee.switch_user(param['conta'][str(cont)])
-#         gee.init()        
-#         gee.tasks(n= param['numeroTask'], return_list= True)        
-    
-#     elif cont > param['numeroLimit']:
-#         cont = 0
-    
-#     cont += 1    
-#     return cont
-
 #exporta a imagem classificada para o asset
-def processoExportar(ROIsFeat, nameB, nfolder):
-    
+def processoExportar(ROIsFeat, nameB, nfolder):    
     optExp = {
           'collection': ROIsFeat, 
           'description': nameB, 
@@ -119,6 +105,9 @@ def processoExportar(ROIsFeat, nameB, nfolder):
     task = ee.batch.Export.table.toDrive(**optExp)
     task.start() 
     print("salvando ... " + nameB + "..!")    
+
+
+# sys.exit()
 
 # get dir path of script 
 npath = os.getcwd()
@@ -140,7 +129,10 @@ for xpath in tqdm(lstPathCSV):
 
 cont = 0
 # cont = gerenciador(cont, param)
-lstNameFeat = []
+lstNameFeat = [
+    # "7438","752","7584","761111","7591", 
+    "7619","765","7712","773","7746","7615"
+]
 # sys.exit()
 # iterando com cada uma das folders FeatC do asset
 # 'asset_ROIs_cluster', 'asset_ROIs_manual', asset_ROIs_grades, asset_ROIS_bacia_grade
@@ -148,10 +140,11 @@ lstNameFeat = []
 lstKeysFolder = ['asset_ROISall_joins']   
 for assetKey in lstKeysFolder:
     lstAssetFolder = GetPolygonsfromFolder(param[assetKey])
+    print(lstAssetFolder[:5])
     list_baciaYearFaltan = []
     for cc, assetFeats in enumerate(lstAssetFolder[:]):        
-        nameFeat = assetFeats.split("/")[-1]
-        if nameFeat not in lstNameFeat:
+        nameFeat = assetFeats.split("/")[-1].split("_")[-1]
+        if nameFeat in lstNameFeat:
             print(f" #{cc} loading FeatureCollection => ", assetFeats)
             try: 
                 ROIs = ee.FeatureCollection(assetFeats)       

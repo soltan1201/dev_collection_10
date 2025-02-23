@@ -173,7 +173,7 @@ allProperties = [
         "ndfi_max","ndfi_min", "ndfi_amp","ndfi_stdDev","sefi_median","sefi_stdDev","sefi_median_dry",
         "wefi_median","wefi_median_wet","wefi_amp","wefi_stdDev","slope",'year','class'
 ]
-# https://code.earthengine.google.com/a7d6a5655537eb3efdee7509be3bd342
+# https://code.earthengine.google.com/229c4294aceed16f90bb9238eafb6f75
 dictBaciasViz = {    
         '741': ["741","751","752","7421","7422","7492",'7611'],
         '7421': ["741","744","754","7421","7422"],
