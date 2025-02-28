@@ -45,7 +45,7 @@ param = {
     'asset_ROIS_joinsBaGr': {'id': 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/ROIs/roisJoinsbyBaciaNN'},
     'asset_ROISall_joins': {'id': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_merged_IndAll'},
     'anoInicial': 1985,
-    'anoFinal': 2022,
+    'anoFinal': 2024,
     'numeroTask': 6,
     'numeroLimit': 4,
     'conta' : {
@@ -130,8 +130,8 @@ for xpath in tqdm(lstPathCSV):
 cont = 0
 # cont = gerenciador(cont, param)
 lstNameFeat = [
-    # "7438","752","7584","761111","7591", 
-    "7619","765","7712","773","7746","7615"
+    "7438","752","7584","761111","7591", 
+    # "7619","765","7712","773","7746","7615"
 ]
 # sys.exit()
 # iterando com cada uma das folders FeatC do asset
