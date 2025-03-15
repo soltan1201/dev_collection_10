@@ -131,7 +131,7 @@ cont = 0
 # cont = gerenciador(cont, param)
 lstNameFeat = [
     "7438","752","7584","761111","7591", 
-    # "7619","765","7712","773","7746","7615"
+    "7619","765","7712","773","7746","7615"
 ]
 # sys.exit()
 # iterando com cada uma das folders FeatC do asset
@@ -144,7 +144,7 @@ for assetKey in lstKeysFolder:
     list_baciaYearFaltan = []
     for cc, assetFeats in enumerate(lstAssetFolder[:]):        
         nameFeat = assetFeats.split("/")[-1].split("_")[-1]
-        if nameFeat in lstNameFeat:
+        if nameFeat not in lstNameFeat:
             print(f" #{cc} loading FeatureCollection => ", assetFeats)
             try: 
                 ROIs = ee.FeatureCollection(assetFeats)       

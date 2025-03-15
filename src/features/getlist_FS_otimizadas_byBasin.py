@@ -3,6 +3,7 @@ import glob
 import copy
 import pandas as pd
 import numpy as np
+import json
 import sys
 from pathlib import Path
 
@@ -34,11 +35,34 @@ for cc, nfile in enumerate(lstFilesFS):
         # print(dictBasinYY[nameBasin])
         
 # sys.exit()
+dictFSBasin = {}
+lstRamking = [f"(1, {kk})" for kk in range(0, 40)]
 print("lista de Basin feitas ", lstBasin)
 print(f" {len(lstBasin)} feitas")
-for nbasin in lstBasin:
+# sys.exit()
+for nbasin in lstBasin[:]:
     print(f"  processing  {nbasin}")
-    for yyear in dictBasinYY[nameBasin]:
+    lstFeat = []
+    for cc, yyear in enumerate(dictBasinYY[nameBasin]):
         pathCSV = os.path.join(pathData, f'featuresSelectS2_{nbasin}_{yyear}.csv')
         dftmp = pd.read_csv(pathCSV)
-        print(dftmp.head(3))
+        print(f"#{cc}:",dftmp.head(3))
+        dftmp = dftmp[dftmp['ranking'].isin(lstRamking)]
+        print(" >>> ", dftmp.shape)
+        lsttmp = list(dftmp['features'].tolist())
+        for featname in lsttmp:
+            if featname not in lstFeat: 
+                lstFeat.append(featname)
+
+    print("lista de features selecionadas \n ", lstFeat)
+    print(len(lstFeat))
+    dictFSBasin[nbasin] = lstFeat
+
+
+# convert and write JSON object to file 
+# with open("dict_lst_features_by_basin.json", "w") as outfile:
+#     json.dump(dictFSBasin, outfile)
+
+for nkey, lstF in dictFSBasin.items():
+    print(f" {nkey} : size> {len(lstF)} >>  {lstF}")
+    
