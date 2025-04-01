@@ -8,7 +8,7 @@ DISTRIBUIDO COM GPLv2
 import os
 import ee
 # import gee
-import copy
+import json
 import sys
 import pandas as pd
 from tqdm import tqdm
@@ -37,11 +37,12 @@ except:
 
 
 param = {
-    'asset_rois_grid1': {'id' : 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_byGradesAgrWat'},
+    'asset_rois_grid1': {'id' : 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_byGradesIndV3'},
     # 'asset_rois_grid2': {'id' : 'projects/nexgenmap/SAMPLES/Caatinga/ROIs'},
     'asset_bacias_buffer' : 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/bacias_hidrografica_caatinga_49_regions',
-    'asset_output': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_merged_IndAll',
-    'asset_roi_basins': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_merged_Ind',
+    'asset_output': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_merged_IndAllv3',
+    # 'asset_roi_basins': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_merged_Ind',
+    'asset_roi_basins': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_byGradesIndV3',
     'asset_grad' : 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/basegrade30KMCaatinga',
     'anoInicial': 2016,
     'anoFinal': 2024,
@@ -156,7 +157,8 @@ else:
         for kbasin, lstG in dictbasinGrid.items():
             print(kbasin, lstG)
 
-# sys.exit()
+dictROIsclass = {}
+sys.exit()
 listaGrid_fails = []
 for cc, nbacia in enumerate(listaNameBacias[:]):
     region_bacia = shpbacias.filter(ee.Filter.eq('nunivotto4', nbacia))
@@ -168,15 +170,18 @@ for cc, nbacia in enumerate(listaNameBacias[:]):
     if len(lstFails) > 0:
         listaGrid_fails += lstFails
     name_export = 'rois_grade_' + nbacia 
-    print(f"==== bacia {nbacia}==== <{featROIsreg.size().getInfo()}> ======")
+    # print(f"==== bacia {nbacia}==== <{featROIsreg.size().getInfo()}> ======")
+    # print(featROIsreg.aggregate_histogram('class').getInfo())
+    dictROIsclass[nbacia] = featROIsreg.aggregate_histogram('class').getInfo()
      # adding the before ROIs with natural class
-    assetROIsBasin = param['asset_roi_basins'] + '/' + name_export 
-    featBefROIs = ee.FeatureCollection(assetROIsBasin)
-    featROIsreg = featROIsreg.merge(featBefROIs)
+    # assetROIsBasin = param['asset_roi_basins'] + '/' + name_export 
+    # featBefROIs = ee.FeatureCollection(assetROIsBasin)
+    # featROIsreg = featROIsreg.merge(featBefROIs)
     
     save_ROIs_toAsset(featROIsreg, name_export)
 
-
+with open('dict_ROIs_basin_class_distribution.json', 'w') as arquivo_json:
+    json.dump(dictROIsclass, arquivo_json, indent=4)
 
 if len(listaGrid_fails) > 0:
     df = pd.DataFrame(listaGrid_fails, columns=['idGrid', 'sizeSaved'])

@@ -572,6 +572,9 @@ def agregateBandsTexturasGLCM(img):
     return  img.addBands(contrastnir).addBands(contrastred
                     ).addBands(contrastnirDry).addBands(contrastredDry)    
 
+def agregateBands_SMA_NDFIa(img):
+    pass
+
 
 #endregion
 
@@ -984,6 +987,7 @@ def save_ROIs_toAsset(collection, name):
     task = ee.batch.Export.table.toAsset(**optExp)
     task.start()
     print("exportando ROIs da bacia $s ...!", name)
+    
 #exporta a imagem classificada para o asset
 def processoExportar(mapaRF, regionB, nameB):
     nomeDesc = 'BACIA_'+ str(nameB)

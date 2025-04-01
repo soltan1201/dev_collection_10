@@ -60,8 +60,8 @@ for nbasin in lstBasin[:]:
 
 
 # convert and write JSON object to file 
-# with open("dict_lst_features_by_basin.json", "w") as outfile:
-#     json.dump(dictFSBasin, outfile)
+with open("dict_lst_features_by_basin.json", "w") as outfile:
+    json.dump(dictFSBasin, outfile)
 
 for nkey, lstF in dictFSBasin.items():
     print(f" {nkey} : size> {len(lstF)} >>  {lstF}")

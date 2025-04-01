@@ -20,10 +20,11 @@ except:
     print("Unexpected error:", sys.exc_info()[0])
     raise
 
-def GetPolygonsfromFolder(assetFolder, sufixo):
+def GetPolygonsfromFolder(assetFolder, sufixo, play_eliminar):
   
     getlistPtos = ee.data.getList(assetFolder)
     lstBacias = []
+    sizeFiles = len(getlistPtos)
     for cc, idAsset in enumerate(getlistPtos): 
         path_ = idAsset.get('id') 
         lsFile =  path_.split("/")
@@ -34,9 +35,10 @@ def GetPolygonsfromFolder(assetFolder, sufixo):
         # print(name)
         # if str(name).startswith(sufixo): AMOSTRAS/col7/CAATINGA/classificationV
         if sufixo in str(name): 
-            print("eliminando {}:  {}".format(cc, name))
+            print("eliminando {}/{}:  {}".format(cc, sizeFiles,name))
             print(path_)
-            ee.data.deleteAsset(path_) 
+            if play_eliminar:
+                ee.data.deleteAsset(path_) 
     
     print(lstBacias)
 
@@ -57,7 +59,13 @@ def GetPolygonsfromFolder(assetFolder, sufixo):
 # asset = {'id': 'projects/mapbiomas-workspace/AMOSTRAS/col8/CAATINGA/ROIs/coletaROIsv6N2cluster'}
 # asset = {'id': 'projects/mapbiomas-workspace/AMOSTRAS/col8/CAATINGA/ROIs/coletaROIsv7N2manual'}
 # asset = {'id': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_byGrades_info'}
-asset = {'id': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_merged_IndAll'}
+# asset = {'id': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_merged_IndAll'}
 # asset = {'id': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_byGradesAgrWat'}
-GetPolygonsfromFolder(asset, '')  # 
+# asset = {'id': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_byGradesIndV2'}  # 
+# asset = {'id': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_byGradesIndExt'}
+# asset = {'id': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_Merges_info'}
+# asset = {'id': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_merged_Ind'}
+asset = {'id': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_merged_Indall'}
+eliminar_files = False
+GetPolygonsfromFolder(asset, '', eliminar_files)  # 
 
