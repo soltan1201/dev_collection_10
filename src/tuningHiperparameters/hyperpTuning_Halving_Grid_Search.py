@@ -144,7 +144,7 @@ def processingROIs_gridSearch(cont, path_name):
 
 
 listCSVsRoi = glob.glob(pathROIs + "/*csv")
-print(listCSVsRoi)
-for cc, nfile in enumerate(listCSVsRoi[:3]):
+print("lista de ROIs em CSV >>> ", listCSVsRoi)
+for cc, nfile in enumerate(listCSVsRoi[:]):
     print(f" #{cc} processing >> {nfile}")
     processingROIs_gridSearch(cc, nfile)
