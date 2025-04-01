@@ -141,10 +141,10 @@ def processingROIs_gridSearch(cont, path_name):
     # ax.invert_yaxis()
 
 
-
-
-listCSVsRoi = glob.glob(pathROIs + "/*csv")
+# listCSVsRoi = glob.glob(pathROIs + "/*csv")
+listCSVsRoi = os.listdir(pathROIs)
+print(pathROIs)
 print("lista de ROIs em CSV >>> ", listCSVsRoi)
 for cc, nfile in enumerate(listCSVsRoi[:]):
-    print(f" #{cc} processing >> {nfile}")
-    processingROIs_gridSearch(cc, nfile)
+    print(f" #{cc} processing >> {os.path.join(pathROIs, nfile)}")
+    processingROIs_gridSearch(cc, os.path.join(pathROIs, nfile))
