@@ -43,13 +43,21 @@ param = {
     'asset_ROIs_grades': {"id" : 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/ROIs/roisGradesgrouped'},
     'asset_ROIS_bacia_grade': {'id': 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/ROIs/roisGradesgroupedBuf'},
     'asset_ROIS_joinsBaGr': {'id': 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/ROIs/roisJoinsbyBaciaNN'},
-    'asset_ROISall_joins': {'id': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_merged_IndAllv3'},
+    'asset_ROISall_joins': {'id': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_merged_IndAllv3C'},
     'anoInicial': 1985,
     'anoFinal': 2024,
     'numeroTask': 6,
-    'numeroLimit': 4,
+    'numeroLimit': 50,
     'conta' : {
-        '0': 'solkanGeodatin'              
+        '0': 'caatinga01',   # 
+        '5': 'caatinga02',
+        '10': 'caatinga03',
+        '15': 'caatinga04',
+        '20': 'caatinga05',        
+        '25': 'solkan1201',    
+        '30': 'solkanGeodatin',
+        '35': 'diegoUEFS',
+        '40': 'superconta'   
     },
     'showFilesCSV' : False,
     'showAssetFeat': False
@@ -127,8 +135,7 @@ for xpath in tqdm(lstPathCSV):
         print(" => " + nameCSV)
     lstNameFeat.append(nameCSV)
 
-cont = 0
-# cont = gerenciador(cont, param)
+
 # lstNameFeat = [
 #     "7438","752","7584","761111","7591", 
 #     "7619","765","7712","773","7746","7615"
@@ -149,11 +156,12 @@ for assetKey in lstKeysFolder:
             print(f" #{cc} loading FeatureCollection => ", assetFeats)
             try: 
                 ROIs = ee.FeatureCollection(assetFeats)       
-                print(nameFeat, " ", ROIs.size().getInfo())     
+                # print(nameFeat, " ", ROIs.size().getInfo())     
                 processoExportar(ROIs, nameFeat, "ROIs_Joined_Allv3")              
             except:
                 # list_baciaYearFaltan.append(nameFeat)
                 # arqFaltante.write(nameFeat + '\n')
                 print("faltando ... " + nameFeat)
 
-    # arqFaltante.close()
+        # arqFaltante.close()
+        # cont = gerenciador(cont)

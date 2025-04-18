@@ -20,3 +20,6 @@ know bands names Index 123
 
 calculo das bordas pernambuco 
 https://code.earthengine.google.com/25a9d771fcbecfce0246335126f5113e
+# vegetação secundaria
+
+projects/mapbiomas-public/assets/brazil/lulc/collection9/mapbiomas_collection90_deforestation_secondary_vegetation_v1

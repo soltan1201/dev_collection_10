@@ -65,7 +65,8 @@ def GetPolygonsfromFolder(assetFolder, sufixo, play_eliminar):
 # asset = {'id': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_byGradesIndExt'}
 # asset = {'id': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_Merges_info'}
 # asset = {'id': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_merged_Ind'}
-asset = {'id': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_merged_Indall'}
-eliminar_files = False
+asset = {'id': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_merged_IndAll'}
+# asset = {'id': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_byGradesIndV3'}
+eliminar_files = True
 GetPolygonsfromFolder(asset, '', eliminar_files)  # 
 

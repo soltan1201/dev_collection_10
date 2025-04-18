@@ -53,6 +53,7 @@ def convert2featCollection (item):
 ####      @param geometry
 #########################################################################
 # https://code.earthengine.google.com/5a7c4eaa2e44f77e79f286e030e94695
+# https://code.earthengine.google.com/?accept_repo=users%2Fmapbiomas%2Fuser-toolkit&scriptPath=users%2Fmapbiomas%2Fuser-toolkit%3Amapbiomas-user-toolkit-calculate-area.js
 def calculateArea (image, pixelArea, geometry):
 
     pixelArea = pixelArea.addBands(image.rename('classe')).clip(geometry)#.addBands(
@@ -71,12 +72,9 @@ def calculateArea (image, pixelArea, geometry):
     areas = ee.FeatureCollection(areas)    
     return areas
 
-
 param = {
-    'asset_fire_monitor' : 'projects/mapbiomas-public/assets/brazil/fire/monitor/mapbiomas_fire_monthly_burned_v1',
-    'asset_fire_anual_cov': 'projects/mapbiomas-public/assets/brazil/fire/collection3_1/mapbiomas_fire_collection31_annual_burned_coverage_v1',
+    'asset_cobertura_col90': "projects/mapbiomas-public/assets/brazil/lulc/collection9/mapbiomas_collection90_integration_v1",
     'asset_matopiba': 'projects/mapbiomas-fogo/assets/territories/matopiba',
-    'asset_semiarido': 'projects/mapbiomas-workspace/AUXILIAR/SemiArido_2024',
     "BR_ESTADOS_2022" : "projects/earthengine-legacy/assets/users/solkancengine17/shps_public/BR_ESTADOS_2022",
     "br_estados_raster": 'projects/mapbiomas-workspace/AUXILIAR/estados-2016-raster',
     "BR_Municipios_2022" : "projects/earthengine-legacy/assets/users/solkancengine17/shps_public/BR_Municipios_2022",
@@ -84,11 +82,12 @@ param = {
     "Im_bioma_250" : "projects/earthengine-legacy/assets/users/solkancengine17/shps_public/Im_bioma_250",
     'vetor_biomas_250': 'projects/mapbiomas-workspace/AUXILIAR/biomas_IBGE_250mil',
     'biomas_250_rasters': 'projects/mapbiomas-workspace/AUXILIAR/RASTER/Bioma250mil',
-    'lstYears': [2019,2020,2021,2022,2023],
-    'driverFolder': 'AREA-EXP-fireMATOPIBA',
+    'asset_semiarido': 'projects/mapbiomas-workspace/AUXILIAR/SemiArido_2024',
+    'asset_shp_UC': 'projects/mapbiomas-arida/UCS_SEMIARIDO_FINAL',
+    'lstYears': [nyear for nyear in range(1985, 2024)],
+    'driverFolder': 'AREA-EXP-SEMIARIDO',
     'scale': 30
 }
-
 dictEst = {
     '21': 'MARANHÃO',
     '22': 'PIAUÍ',
@@ -104,59 +103,37 @@ dictEst = {
     '17': 'TOCANTINS',
     '52': 'GOIÁS'
 }
-
-
-def iterandoXanoImCruda_monitor(limiteEst, estadoCod, cruzMPB):
+tipoUC = ['Proteção Integral', 'Uso Sustentável']
+dictUC = {
+    'Proteção Integral': 'protecao_integral',
+    'Uso Sustentável': 'uso_sustentavel'
+}
+byUnidade = True
+def iterandoXanoImCruda(limiteEst, estadoCod, name_UC, shpUC):
     areaEstado = ee.FeatureCollection([])
-    shpMatopiba = ee.FeatureCollection(param['asset_matopiba']).geometry()
-    recorteGeo = shpMatopiba.intersection(limiteEst.geometry())
-    pixelArea = ee.Image.pixelArea().divide(10000).clip(recorteGeo)
-    biomas_raster = ee.Image(param['biomas_250_rasters']).eq(2);
-
-    for nyear in param['lstYears']:
-        print(f" ======== processing year {nyear} for mapbiomas Monitor Fire  =====")
-        imgFire = (
-            ee.ImageCollection(param['asset_fire_monitor'])
-                    .filter(ee.Filter.eq('year', nyear))
-                    .reduce(ee.Reducer.sum()).gt(0)
-                    .updateMask(biomas_raster)
-        )        
-        imgFire = imgFire.clip(recorteGeo).selfMask();
-        areaTemp = calculateArea (imgFire, pixelArea, recorteGeo)        
-        areaTemp = areaTemp.map( lambda feat: feat.set(
-                                            'year', nyear, 
-                                            'region', 'Matopiba', 
-                                            'estado_name', dictEst[str(estadoCod)], # colocar o nome do estado
-                                            'estado_codigo', estadoCod
-                                        ))
-        areaEstado = areaEstado.merge(areaTemp) 
-
-    return areaEstado
-
-def iterandoXanoImCruda_Cover(limiteEst, estadoCod, cruzMPB):
-    areaEstado = ee.FeatureCollection([])    
     shpSemiarido = ee.FeatureCollection(param['asset_semiarido']).geometry()
     recorteGeo = shpSemiarido.intersection(limiteEst.geometry())
-    if cruzMPB:
-        shpMatopiba = ee.FeatureCollection(param['asset_matopiba']).geometry()
-        recorteGeo = recorteGeo.intersection(shpMatopiba)
-
+    recorteGeo = recorteGeo.intersection(ee.Geometry(shpUC))
     masc_recorte = (ee.FeatureCollection([ee.Feature(recorteGeo, {'valor': 1})])
                         .reduceToImage(['valor'], ee.Reducer.first()))
-    pixelArea = ee.Image.pixelArea().divide(10000).updateMask(masc_recorte)    
+    pixelArea = ee.Image.pixelArea().divide(10000).updateMask(masc_recorte)
+    # biomas_raster = ee.Image(param['biomas_250_rasters']).eq(2);
 
-    for nyear in range(1985, 2024):
-        print(f" ======== processing year {nyear} for mapbiomas Monitor Fire  =====")
-        imgFire = (
-            ee.Image(param['asset_fire_anual_cov'])
-                    .select(f"burned_coverage_{nyear}")
+    for nyear in param['lstYears'][:]:
+        print(f" ======== processing year {nyear} for mapbiomas Uso e Cobertura  =====")
+        namebanda = 'classification_' + str(nyear) 
+        mapa_arr = (
+            ee.Image(param['asset_cobertura_col90'])
+                    .select(namebanda)
                     .updateMask(masc_recorte)
-                    .selfMask()
         )        
-        areaTemp = calculateArea (imgFire, pixelArea, recorteGeo)        
+
+        areaTemp = calculateArea (mapa_arr, pixelArea, recorteGeo)  
+        # print(areaTemp)
         areaTemp = areaTemp.map( lambda feat: feat.set(
                                             'year', nyear, 
                                             'region', 'Semiarido', 
+                                            'subregion', name_UC,
                                             'estado_name', dictEst[str(estadoCod)], # colocar o nome do estado
                                             'estado_codigo', estadoCod
                                         ))
@@ -177,27 +154,50 @@ def processoExportar(areaFeat, nameT):
 
 # bioma = 'Caatinga'
 # rasterLimit = ee.Image(param['biomas_250_rasters']).eq(2)
-calcMatopiba = True
 
 shpEstados = ee.FeatureCollection(param['BR_ESTADOS_2022'])
 # lstEstCruz = [21,22,23,24,25,26,27,28,29,31,32]
-# lstEstCruz = ['17','21','22','29'];
 lstEstCruz = ['17','21','22','23','24','25','26','27','28','29','31','32','52']
-areaGeral = ee.FeatureCollection([]) 
-# print("---- SHOW ALL BANDS FROM MAPBIOKMAS MAPS -------\n ", imgMapp.bandNames().getInfo())
-for estadoCod in lstEstCruz:    
-    print(f"processing Estado {dictEst[str(estadoCod)]} with code {estadoCod}")
-    shpEstado = shpEstados.filter(ee.Filter.eq('CD_UF', estadoCod))   
-    areaXestado = iterandoXanoImCruda_Cover(shpEstado, estadoCod, calcMatopiba)
-    print("adding area ")
-    try:
-        print(areaXestado.size().getInfo())
-        areaGeral = areaGeral.merge(areaXestado)
-    except:
-        print(f"Fail estado {dictEst[str(estadoCod)]}")
+shpLimitUC = ee.FeatureCollection(param['asset_shp_UC'])
 
-print("exportando a área geral ")
-if calcMatopiba:
-    processoExportar(areaGeral, 'area_anual_fire_state_semiarido_matopiba')
+if byUnidade:
+    for cc, tUC in enumerate(tipoUC[:]):
+        nameCSV = f"area_{dictUC[tUC]}_Semiarido"
+        print("Calculando a area ", nameCSV)
+        shptipo = shpLimitUC.filter(ee.Filter.eq('grupo', tUC)).geometry()
+        # print(shptipo.area().getInfo())
+        # sys.exit()
+        areaGeral = ee.FeatureCollection([]) 
+        # print("---- SHOW ALL BANDS FROM MAPBIOKMAS MAPS -------\n ", imgMapp.bandNames().getInfo())
+        for estadoCod in lstEstCruz:    
+            print(f"processing Estado {dictEst[str(estadoCod)]} with code {estadoCod}")
+            shpEstado = shpEstados.filter(ee.Filter.eq('CD_UF', estadoCod))
+            areaXestado = iterandoXanoImCruda(shpEstado, estadoCod,  tUC, shptipo)
+            try:
+                if cc == 0:
+                    getinfoArea = areaXestado.size().getInfo()
+                    print("adding area ", getinfoArea)
+                areaGeral = areaGeral.merge(areaXestado)
+            except:
+                print("fails " +  tUC)
+                print("estado ", estadoCod)
+
+        print("exportando a área geral ")
+        processoExportar(areaGeral, nameCSV)
 else:
-    processoExportar(areaGeral, 'area_anual_fire_state_semiarido')
+    areaGeral = ee.FeatureCollection([]) 
+    nameCSV = "area_unidade_conservacao_all_Semiarido"
+    for estadoCod in lstEstCruz:    
+        print(f"processing Estado {dictEst[str(estadoCod)]} with code {estadoCod}")
+        shpEstado = shpEstados.filter(ee.Filter.eq('CD_UF', estadoCod))
+        areaXestado = iterandoXanoImCruda(shpEstado, estadoCod,  'unidade_conservacao_all', shpLimitUC.geometry())
+        try:
+            # getinfoArea = areaXestado.size().getInfo()
+            # print("adding area ", getinfoArea)
+            areaGeral = areaGeral.merge(areaXestado)
+        except:
+            print("fails " +  tUC)
+            print("estado ", estadoCod)
+
+    print("exportando a área geral ")
+    processoExportar(areaGeral, nameCSV)
