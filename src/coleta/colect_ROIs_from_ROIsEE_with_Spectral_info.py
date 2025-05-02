@@ -45,12 +45,9 @@ class ClassMosaic_indexs_Spectral(object):
         'asset_grad': 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/basegrade30KMCaatinga',
         'assetMapbiomas90': 'projects/mapbiomas-public/assets/brazil/lulc/collection9/mapbiomas_collection90_integration_v1', 
         'asset_collectionId': 'LANDSAT/COMPOSITES/C02/T1_L2_32DAY',
-        'asset_mask_toSamples': 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/masks/mask_pixels_toSample', 
-        'asset_output': 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/S2/ROIs/coleta2',
-        # 'asset_output_grade': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_byGradesInd', 
-        'asset_output_grade': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_byGradesIndV3', 
-        # 'asset_output': 'projects/nexgenmap/SAMPLES/Caatinga',
-        # Spectral bands selected
+        'asset_mosaic': 'projects/nexgenmap/MapBiomas2/LANDSAT/BRAZIL/mosaics-2',
+        'asset_ROIs_reference':  'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_cleaned_downsamplesv4C', 
+        'asset_output': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_cleaned_MB_V4C',
         'lsClasse': [4, 3, 12, 15, 18, 21, 22, 33],
         'lsPtos': [300, 500, 300, 350, 150, 100, 150, 300],
         "anoIntInit": 1985,
@@ -86,16 +83,18 @@ class ClassMosaic_indexs_Spectral(object):
     # MOSAIC WITH BANDA 2022 
     # https://code.earthengine.google.com/c3a096750d14a6aa5cc060053580b019
     def __init__(self):
-
         self.regionInterest = ee.FeatureCollection(self.options['asset_grad'])
+        band_year = [nband + '_median' for nband in self.options['bnd_L']]
+        band_drys = [bnd + '_dry' for bnd in band_year]    
+        band_wets = [bnd + '_wet' for bnd in band_year]
+        self.band_mosaic = band_year + band_wets + band_drys
+        lstSat = ["l5","l7","l8"]
         self.imgMosaic = (
-            ee.ImageCollection(self.options['asset_collectionId'])
-                            .filterBounds(self.regionInterest.geometry().bounds())
-                            .select(self.options['bnd_L'])
-        )
-        # print(simgMosaic.first().getInfo())
-        # self.imgMosaic = simgMosaic#.map(lambda img: self.process_re_escalar_img(img))
-                                      
+            ee.ImageCollection(self.options['asset_mosaic'])
+                            .filter(ee.Filter.inList('biome', self.options['biomas']))
+                            .filter(ee.Filter.inList('satellite', lstSat))
+                            .select(self.band_mosaic)
+        )                                              
         print("  ", self.imgMosaic.size().getInfo())
         print("see band Names the first ")
         # print(" ==== ", ee.Image(self.imgMosaic.first()).bandNames().getInfo())
@@ -103,9 +102,6 @@ class ClassMosaic_indexs_Spectral(object):
         # sys.exit()
         self.lst_year = [k for k in range(self.options['anoIntInit'], self.options['anoIntFin'] + 1)]
         print("lista de anos ", self.lst_year)
-        
-        # @collection90: mapas de uso e cobertura Mapbiomas ==> para extrair as areas estaveis
-        self.imgMapbiomas = ee.Image(self.options['assetMapbiomas90'])
 
     # def process_re_escalar_img (self, imgA):
     #     imgMosaic = imgA.select('blue_median').gte(0).rename('constant');
@@ -820,7 +816,6 @@ class ClassMosaic_indexs_Spectral(object):
 
 
     def CalculateIndice(self, imagem):
-
         band_feat = [
                 "ratio","rvi","ndwi","awei","iia","evi",
                 "gcvi","gemi","cvi","gli","shape","afvi",
@@ -869,7 +864,6 @@ class ClassMosaic_indexs_Spectral(object):
         imageW = self.agregate_Bands_SMA_NDFIa(imageW)
 
         return imageW  
-
 
     def make_mosaicofromReducer(self, colMosaic):
         band_year = [nband + '_median' for nband in self.options['bnd_L']]
@@ -982,129 +976,74 @@ class ClassMosaic_indexs_Spectral(object):
 
         return mosaico
 
-    def iterate_bacias(self, idGrade, askSize):        
+    def iterate_bacias(self, _nbacia):        
 
         # loading geometry bacim
-    
-        oneGrade = ee.FeatureCollection(self.options['asset_grad']).filter(
-                                        ee.Filter.eq('indice', int(idGrade)))
-        # print("show size regions ", oneGrade.size().getInfo())                                
-        oneGrade = oneGrade.geometry()  
-        # print("show area regions ", oneGrade.area().getInfo()) 
-        # sys.exit()
-        
-        layerSamplesMask = ee.ImageCollection(self.options['asset_mask_toSamples']
-                                ).filterBounds(oneGrade)#
-        numLayers = 1
-        try:
-            numLayers =  layerSamplesMask.size().getInfo()
-            if numLayers > 0:
-                layerSamplesMask = layerSamplesMask.mosaic()
-            else:
-                layerSamplesMask = ee.Image.constant(1).clip(oneGrade) 
-                numLayers = 0
-        except:
-            layerSamplesMask = ee.Image.constant(1).clip(oneGrade) 
-            numLayers = 0    
+        baciabuffer = (ee.FeatureCollection(self.options['asset_bacias_buffer'])
+                            .filter(ee.Filter.eq('nunivotto4', _nbacia)))
+        print(f"know about the geometry 'nunivotto4' >>  {_nbacia
+                        } loaded < {baciabuffer.size().getInfo()} > geometry" )    
+        # baciabuffer = baciabuffer.geometry()
+        maskBaciaBuffer = baciabuffer.reduceToImage(['id_codigo'], ee.Reducer.first()).gt(0)
 
-        shpAllFeat = ee.FeatureCollection([]) 
         for nyear in self.lst_year[:]:
             bandYear = 'classification_' + str(nyear)
-            print(f" processing grid_year => {idGrade} <> {bandYear} ")     
-            date_inic =  str(nyear) + '-01-01'      
-            date_end = str(nyear) + '-12-31'
+            print(f" processing _nbacia => {_nbacia} <> {bandYear} ")
 
-            imgColfiltered = (
-                self.imgMosaic.filter(ee.Filter.date(date_inic, date_end))
-                        .filterBounds(oneGrade)
-            )
+            rois_Samples = ee.FeatureCollection(os.path.join(self.options['asset_ROIs_reference'], f"{_nbacia}_{nyear}_cd"))   
+            dict_classes = rois_Samples.aggregate_histogram('class').getInfo()         
+            print("dictionario de classes ", dict_classes)
 
-            # img_recMosaico = img_recMosaic.map(lambda img: self.calculateBandsIndexEVI(img))
-            # mosaicoBuilded = self.make_mosaicofromReducer(imgColfiltered)
-            mosaicoBuilded = self.make_mosaicofromIntervalo(imgColfiltered, nyear) 
-            # print("metadado bandas names ", mosaicoBuilded.bandNames().getInfo())
+            # # testando coincidencia com a geometria 
+            # otherROIs = rois_Samples.filterBounds(baciabuffer.geometry())
+            # print(" supervise ", otherROIs.size().getInfo())
 
-            print("----- calculado todos os old(102) now 123 indices ---------------------")
+            imgColfiltered = self.imgMosaic.filter(ee.Filter.eq('year', nyear)) 
+            imgColfiltered = imgColfiltered.mosaic().updateMask(maskBaciaBuffer) 
 
-            img_recMosaicnewB = self.CalculateIndice(mosaicoBuilded.clip(oneGrade))
-            # bndAdd = img_recMosaicnewB.bandNames().getInfo()            
-            # print(f"know bands names Index {len(bndAdd)}")
-            # print("  ", bndAdd)
-            
+            # print("size images ", imgColfiltered.size().getInfo())
             # sys.exit()
-            nameBandYear = bandYear
-            if nyear == 2024:
-                nameBandYear = 'classification_2023'
-            if numLayers > 0:    
-                if nyear == 2024:
-                    maskYear = layerSamplesMask.select("mask_sample_2023").eq(1).clip(oneGrade)                    
-                else:
-                    maskYear = layerSamplesMask.select("mask_sample_" + str(nyear)).eq(1).clip(oneGrade)
-                # print("imagem mask layer => ", maskYear.bandNames().getInfo())
-            else:
-                maskYear = layerSamplesMask
+            #
+            # print("metadado bandas names ", imgColfiltered.bandNames().getInfo())
+            print("----- calculado todos os old(102) now 123 indices ---------------------")
+            img_recMosaicnewB = self.CalculateIndice(imgColfiltered)
+            # print("metadados bandas Mosaico Calculado  >>> \n ", img_recMosaicnewB.bandNames().getInfo())
+            # sys.exit()
 
-            # shpAllFeat = ee.FeatureCollection([]) 
-
-            layerCC = (
-                self.imgMapbiomas.select(nameBandYear)
-                    .remap(self.options['classMapB'], self.options['classNew'])
-                    .clip(oneGrade).rename('class')             
-            )             
-            colectionGeo =  ee.FeatureCollection([
-                    ee.Feature(oneGrade, {'year': nyear, 'GRID_ID': idGrade})
-                ])
             # print("numero de ptos controle ", roisAct.size().getInfo())
             # opcoes para o sorteio estratificadoBuffBacia
-            # sample(region, scale, projection, factor, numPixels, seed, dropNulls, tileScale, geometries)
-            ptosTemp = (
-                img_recMosaicnewB.addBands(layerCC)
-                .addBands(ee.Image.constant(nyear).rename('year'))
-                .addBands(ee.Image.constant(idGrade).rename('GRID_ID'))
-                .updateMask(maskYear)
-                .sample(
-                    region=  oneGrade,  
-                    scale= 30,   
-                    numPixels= 5000,
-                    dropNulls= True,
-                    geometries= True
-                )
-            )
-            # lstBandsNNull = ['blue_median', 'blue_median_wet', 'blue_median_dry']
-            # ptosTemp = ptosTemp.filter(ee.Filter.notNull(lstBandsNNull))
-            # print("numero de ptos controle ", ptosTemp.size().getInfo())
-            # insere informacoes em cada ft
-            # ptosTemp = ptosTemp.map(lambda feat : feat.set('year', nyear, 'GRID_ID', idGrade) )
-            shpAllFeat = shpAllFeat.merge(ptosTemp)
-                # sys.exit()
-            # print(f"======  coleted rois from class {self.options['lsClasse']}  =======")
-            # sys.exit()
-        name_exp = 'rois_grade_' + str(idGrade) #  + "_" + str(nyear)# + "_cc_" + str(nclass)    
-        # name_exp = 'rois_grade_' + str(idGrade)
-        if askSize:
-            sizeROIscol = ee.FeatureCollection(shpAllFeat).size().getInfo()
-            if sizeROIscol > 1:
-                self.save_ROIs_toAsset(ee.FeatureCollection(shpAllFeat), name_exp) 
-            else:
-                print(" we can´t to export roi ")
-
-        else:
-            self.save_ROIs_toAsset(ee.FeatureCollection(shpAllFeat), name_exp)
-                
-    
+            featSamples = ee.FeatureCollection([])
+            for nclass, NNsample in dict_classes.items():
+                nclass = int(float(nclass))
+                if NNsample > 10:
+                    # sample(region, scale, projection, factor, numPixels, seed, dropNulls, tileScale, geometries)
+                    ptosTemp = (
+                        img_recMosaicnewB
+                        .sample(
+                            region=  rois_Samples.filter(ee.Filter.eq('class', nclass )),  
+                            scale= 30,
+                            dropNulls= True,
+                            geometries= True
+                        )
+                    )
+                    ptosTemp = ptosTemp.map(lambda feat: feat.set('class', nclass))
+                    featSamples = featSamples.merge(ptosTemp)
+            name_exp = f'{_nbacia}_{nyear}_cd'   
+            self.save_ROIs_toAsset(ee.FeatureCollection(featSamples), name_exp)
+            # print( "name export {name_exp} >> ", ee.FeatureCollection(ptosTemp).size().getInfo())
+            # sys.exit() 
+ 
     # salva ftcol para um assetindexIni
     # lstKeysFolder = ['cROIsN2manualNN', 'cROIsN2clusterNN'] 
     def save_ROIs_toAsset(self, collection, name):
         optExp = {
             'collection': collection,
             'description': name,
-            'assetId': self.options['asset_output_grade'] + "/" + name
+            'assetId': self.options['asset_output'] + "/" + name
         }
         task = ee.batch.Export.table.toAsset(**optExp)
         task.start()
         print("exportando ROIs da bacia $s ...!", name)
-
-
 
 
 def ask_byGrid_saved(dict_asset):
@@ -1128,79 +1067,6 @@ shp_grid = ee.FeatureCollection(asset_grid)
 # lstIds = shp_grid.reduceColumns(ee.Reducer.toList(), ['indice']).get('list').getInfo()
 # print("   ", lstIds)
 
-lstIdCode = [
-    3990, 3991, 3992, 3993, 3994, 3995, 3996, 3997, 3998, 3999, 4000, 4096, 
-    4097, 4098, 4099, 4100, 4101, 4102, 4103, 4104, 4105, 4106, 4107, 4108, 
-    4109, 4110, 4111, 4112, 4113, 4114, 4115, 4116, 4117, 4118, 4119, 4120, 
-    4121, 4122, 4123, 4414, 4415, 4416, 4417, 4418, 4419, 4420, 4421, 4422, 
-    4423, 4424, 4425, 4426, 4427, 4428, 4429, 4430, 4431, 4432, 4433, 4434,
-    4435, 4436, 4437, 4438, 4439, 4440, 4202, 4203, 4204, 4205, 4206, 4207, 
-    4208, 4209, 4210, 4211, 4212, 4213, 4214, 4215, 4216, 4217, 4218, 4219, 
-    4220, 4221, 4222, 4223, 4224, 4225, 4226, 4227, 4228, 4001, 4002, 4003, 
-    4004, 4005, 4006, 4007, 4008, 4009, 4010, 4011, 4012, 4013, 4014, 4015, 
-    4016, 4308, 4309, 4310, 4311, 4312, 4313, 4314, 4315, 4316, 4317, 4318, 
-    4319, 4320, 4321, 4322, 4323, 4324, 4325, 4326, 4327, 4328, 4329, 4330, 
-    4331, 4332, 4333, 4334, 4626, 4627, 4628, 4629, 4630, 4631, 4632, 4633, 
-    4634, 4635, 4636, 4637, 4638, 4639, 4640, 4641, 4642, 4643, 4644, 4645, 
-    4646, 4647, 4648, 4649, 4650, 4651, 4942, 4943, 4944, 4945, 4946, 4947, 
-    4948, 4949, 4950, 4951, 4952, 4953, 4954, 4955, 4956, 4957, 4958, 4959, 
-    4960, 4961, 4962, 4731, 4732, 4733, 4734, 4735, 4736, 4737, 4738, 4739, 
-    4740, 4741, 4742, 4743, 4744, 4745, 4746, 4747, 4748, 4749, 4750, 4751, 
-    4752, 4753, 4754, 4755, 4756, 4520, 4521, 4522, 4523, 4524, 4525, 4526, 
-    4527, 4528, 4529, 4530, 4531, 4532, 4533, 4534, 4535, 4536, 4537, 4538, 
-    4539, 4540, 4541, 4542, 4543, 4544, 4545, 4546, 4837, 4838, 4839, 4840, 
-    4841, 4842, 4843, 4844, 4845, 4846, 4847, 4848, 4849, 4850, 4851, 4852, 
-    4853, 4854, 4855, 4856, 4857, 5376, 5377, 5378, 5379, 5380, 5381, 5382, 
-    5383, 5384, 5385, 5154, 5155, 5156, 5157, 5158, 5159, 5160, 5161, 5162, 
-    5163, 5164, 5165, 5166, 5167, 5168, 5169, 5170, 5171, 5172, 5173, 5174, 
-    5175, 5471, 5472, 5473, 5474, 5475, 5476, 5477, 5478, 5479, 5480, 5481, 
-    5482, 5483, 5484, 5485, 5486, 5487, 5488, 5489, 5490, 5261, 5262, 5263, 
-    5264, 5265, 5266, 5267, 5268, 5269, 5270, 5271, 5272, 5273, 5274, 5275, 
-    5276, 5277, 5278, 5279, 5280, 5048, 5049, 5050, 5051, 5052, 5053, 5054, 
-    5055, 5056, 5057, 5058, 5059, 5060, 5061, 5062, 5063, 5064, 5065, 5066, 
-    5067, 5366, 5367, 5368, 5369, 5370, 5371, 5372, 5373, 5374, 5375, 5901, 
-    5902, 5903, 5904, 5905, 5906, 5907, 5908, 5683, 5684, 5686, 5687, 5688, 
-    5689, 5690, 5691, 5692, 5693, 5694, 5695, 5696, 5697, 5698, 5699, 5700, 
-    5792, 5793, 5794, 5795, 5796, 5797, 5798, 5799, 5800, 5801, 5802, 5803, 
-    5804, 5805, 5576, 5577, 5578, 5579, 5580, 5581, 5582, 5583, 5584, 5585, 
-    5586, 5587, 5588, 5589, 5590, 5591, 5592, 5593, 5594, 5595, 6217, 6218, 
-    6219, 6220, 6221, 6222, 6006, 6007, 6008, 6009, 6010, 6011, 6012, 6013, 
-    6323, 6324, 6325, 6326, 6327, 6112, 6113, 6114, 6115, 6116, 6117, 6118, 
-    2322, 2323, 2324, 2325, 2326, 2327, 2328, 2329, 2425, 2426, 2427, 2428, 
-    2429, 2430, 2431, 2432, 2433, 2434, 2220, 2223, 2224, 2840, 2841, 2842, 
-    2843, 2844, 2845, 2846, 2847, 2848, 2849, 2850, 2851, 2852, 2853, 2854, 
-    2855, 2856, 2633, 2634, 2635, 2636, 2637, 2638, 2639, 2640, 2641, 2642, 
-    2643, 2644, 2645, 2646, 2941, 2942, 2943, 2944, 2945, 2946, 2947, 2948, 
-    2949, 2950, 2951, 2952, 2953, 2954, 2955, 2956, 2957, 2958, 2959, 2960, 
-    2737, 2738, 2739, 2740, 2741, 2742, 2743, 2744, 2745, 2746, 2747, 2748, 
-    2749, 2750, 2751, 2529, 2530, 2531, 2532, 2533, 2534, 2535, 2536, 2537, 
-    2538, 2539, 2540, 3360, 3361, 3362, 3363, 3364, 3365, 3366, 3367, 3368, 
-    3369, 3370, 3371, 3372, 3373, 3374, 3375, 3376, 3377, 3378, 3379, 3380, 
-    3381, 3382, 3383, 3150, 3151, 3152, 3153, 3154, 3155, 3156, 3157, 3158, 
-    3159, 3160, 3161, 3162, 3163, 3164, 3165, 3166, 3167, 3168, 3169, 3170, 
-    3171, 3465, 3466, 3467, 3468, 3469, 3470, 3471, 3472, 3473, 3474, 3475, 
-    3476, 3477, 3478, 3479, 3480, 3481, 3482, 3483, 3484, 3485, 3486, 3487, 
-    3488, 3489, 3255, 3256, 3257, 3258, 3259, 3260, 3261, 3262, 3263, 3264, 
-    3265, 3266, 3267, 3268, 3269, 3270, 3271, 3272, 3273, 3274, 3275, 3276, 
-    3277, 3278, 3046, 3047, 3048, 3049, 3050, 3051, 3052, 3053, 3054, 3055, 
-    3056, 3057, 3058, 3059, 3060, 3061, 3062, 3063, 3064, 3584, 3585, 3586, 
-    3587, 3588, 3589, 3590, 3591, 3592, 3593, 3594, 3885, 3886, 3887, 3888, 
-    3889, 3890, 3891, 3892, 3893, 3894, 3895, 3896, 3897, 3898, 3899, 3900, 
-    3901, 3902, 3903, 3904, 3905, 3906, 3907, 3908, 3909, 3910, 3911, 3675, 
-    3676, 3677, 3678, 3679, 3680, 3681, 3682, 3683, 3684, 3685, 3686, 3687, 
-    3688, 3689, 3690, 3691, 3692, 3693, 3694, 3695, 3696, 3697, 3698, 3699, 
-    3700, 3780, 3781, 3782, 3783, 3784, 3785, 3786, 3787, 3788, 3789, 3790, 
-    3791, 3792, 3793, 3794, 3795, 3796, 3797, 3798, 3799, 3800, 3801, 3802, 
-    3803, 3804, 3805, 3570, 3571, 3572, 3573, 3574, 3575, 3576, 3577, 3578, 
-    3579, 3580, 3581, 3582, 3583
-]
-
-
-# lstIdCode = [
-#     3992, 4098, 4203, 4546, 3887, 3675
-# ]
-
-
 
 reprocessar = False
 if reprocessar:
@@ -1210,21 +1076,20 @@ if reprocessar:
 
 # sys.exit()
 param = {
-    'anoInicial': 1985,
-    'anoFinal': 2024,
-    'changeCount': True,
+    'anoInicial': 2016,
+    'anoFinal': 2022,
+    'changeCount': False,
     'numeroTask': 6,
-    'numeroLimit': 110,
+    'numeroLimit': 50,
     'conta': {
         '0': 'caatinga01',
-        '10': 'caatinga02',
-        '20': 'caatinga03',
-        '30': 'caatinga04',
-        '40': 'caatinga05',
-        '50': 'solkan1201',
-        # '120': 'diegoGmail',
-        '60': 'solkanGeodatin',
-        '70': 'superconta'
+        '5': 'caatinga02',
+        '10': 'caatinga03',
+        '15': 'caatinga04',
+        '20': 'caatinga05',
+        '25': 'solkan1201',
+        # '60': 'solkanGeodatin',
+        '30': 'superconta'
     },
 }
 def gerenciador(cont):    
@@ -1261,30 +1126,41 @@ def gerenciador(cont):
     return cont
 
 askingbySizeFC = False
-searchFeatSaved = True
-cont = 70
+searchFeatSaved = False
+cont = 30
 if param['changeCount']:
     cont = gerenciador(cont)
 
+nameBacias = [
+    '7411','7754', '7691', '7581', '7625', '7584', '751', '7614', 
+    '752', '7616', '745', '7424', '773', '7612', '7613', 
+    '7618', '7561', '755', '7617', '7564', '761111','761112', 
+    '7741', '7422', '76116', '7761', '7671', '7615',  
+    '7764', '757', '771', '7712', '766', '7746', '753', '764', 
+    '7541', '7721', '772', '7619', '7443', '765', '7544', '7438', 
+    '763', '7591', '7592', '7622', '746'
+]
+print(f"we have {len(nameBacias)} bacias")
 
 objetoMosaic_exportROI = ClassMosaic_indexs_Spectral()
-print("saida ==> ", objetoMosaic_exportROI.options['asset_output_grade'])
+print("saida ==> ", objetoMosaic_exportROI.options['asset_output'])
 # sys.exit()
 if searchFeatSaved: 
-    lstFeatAsset = ask_byGrid_saved({'id': objetoMosaic_exportROI.options['asset_output_grade']})
+    lstFeatAsset = ask_byGrid_saved({'id': objetoMosaic_exportROI.options['asset_output']})
     print("   lista de feat ", lstFeatAsset[:5] )
     print("  == size ", len(lstFeatAsset))
     askingbySizeFC = False
 else:
     lstFeatAsset = []
-print("size of grade geral >> ", len(lstIdCode))
+
 # sys.exit()
-inicP = 235 # 0, 100
-endP = 800   # 100, 200, 300, 600
-for cc, item in enumerate(lstIdCode[inicP:endP]):
+
+inicP = 0 # 0, 100
+endP = 1   # 100, 200, 300, 600
+for cc, item in enumerate(nameBacias[inicP: endP]):
     print(f"# {cc + 1 + inicP} loading geometry grade {item}")   
     if item not in lstFeatAsset:
-        objetoMosaic_exportROI.iterate_bacias(item, askingbySizeFC)
-        cont = gerenciador(cont)
+        objetoMosaic_exportROI.iterate_bacias(item)
+        # cont = gerenciador(cont)
     # sys.exit()
 

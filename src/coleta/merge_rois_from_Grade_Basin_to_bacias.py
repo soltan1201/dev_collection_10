@@ -40,10 +40,10 @@ except:
 
 
 param = {
-    'asset_rois_grid1': {'id' : 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_byGradesIndV3'},
+    'asset_rois_grid1': {'id' : 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_byGradesInd_MBV4'},
     # 'asset_rois_grid2': {'id' : 'projects/nexgenmap/SAMPLES/Caatinga/ROIs'},
     'asset_bacias_buffer' : 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/bacias_hidrografica_caatinga_49_regions',
-    'asset_output': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_merged_IndAllv3C',
+    'asset_output': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_merged_IndAllv4C',
     # 'asset_roi_basins': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_merged_Ind',
     'asset_roi_basins': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_byGradesIndV3',
     'asset_grad' : 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/basegrade30KMCaatinga',
@@ -66,6 +66,7 @@ param = {
 }
 
 def ask_ifGrid_ROIS_saved( dict_asset, printName, listtoLoad): 
+    # a lista de todos os asset dentro da pasta principal definina em param.asset_rois_grid1
     getlstFeat2 = ee.data.getList(dict_asset)
     print(f" we have {len(getlstFeat2)} featshp of ROIs")
     sizeFeat = 0
@@ -77,23 +78,24 @@ def ask_ifGrid_ROIS_saved( dict_asset, printName, listtoLoad):
         path_ = idAsset['id']
         name_feat = path_.split('/')[-1]
         idGrade = int(name_feat.split("_")[-1])
+
+        # entra na lista de grades que pertencem a bacia selecionada 
         if idGrade in listtoLoad:
             lstPresent.append(idGrade)
-            print("adding >> ", name_feat)
+            print(f"#{cc}  >> {idGrade}  adding >> from {name_feat}")
             shpROIS = ee.FeatureCollection(path_)
             if cc < 1:
                 sizeFeat = shpROIS.size().getInfo()
-                print( sizeFeat)            
+                print("quantidade de samples ", sizeFeat)            
             featAllRois = featAllRois.merge(shpROIS)
-        cc += 1
-
+            cc += 1
+    # verificar se estão todas as possiveis grades dentro 
+    # das verificadas 
     lstFailss = []
     for idgrade in listtoLoad:
         if idgrade not in lstPresent:
             lstFailss.append(idgrade)
-
     return featAllRois, lstFailss
-
 
 def ask_byGrid_saved( dict_asset, printName, listtoLoad): 
     getlstFeat2 = ee.data.getList(dict_asset)
@@ -195,8 +197,7 @@ def gerenciador(cont):
             ee.Initialize(project= projAccount) # project='ee-cartassol'
             print('The Earth Engine package initialized successfully!')
         except ee.EEException as e:
-            print('The Earth Engine package failed to initialize!') 
-        
+            print('The Earth Engine package failed to initialize!')         
         # relatorios.write("Conta de: " + param['conta'][str(cont)] + '\n')
 
         tarefas = tasks(
@@ -215,14 +216,13 @@ def gerenciador(cont):
 pathJson = getPathCSV("regJSON/")  
 
 listaNameBacias = [
-    # '7754', '7691', '7581', '7625', '7584', '751', '7614', 
-    # '752', '7616', '745', '7424', '773', '7612', '7613', 
-    # '7618', '7561', 
-    '755', '7617', '7564', '761111', '761112', 
+    '7754', '7691', '7581', '7625', '7584', '751', '7614', 
+    '752', '7616', '745', '7424', '773', '7612', '7613', 
+    '7618', '7561', '755', '7617', '7564', '761111', '761112', 
     '7741', '7422', '76116', '7761', '7671', '7615', '7411', 
     '7764', '757', '771', '7712', '766', '7746', '753', '764', 
     '7541', '7721', '772', '7619', '7443', '765', '7544', 
-    '7438', '763', '7591', '7592', '7622', '746',
+    '7438', '763', '7591', '7592', '7622', '746'
 ]
 getdictGrid = False
 printarNomeLoaded = True
@@ -260,16 +260,17 @@ for cc, nbacia in enumerate(listaNameBacias[:]):
     # sys.exit()
     if len(lstFails) > 0:
         listaGrid_fails += lstFails
-    name_export = 'rois_grade_' + nbacia 
+    name_export = 'rois_fromGrade_' + nbacia 
     # print(f"==== bacia {nbacia}==== <{featROIsreg.size().getInfo()}> ======")
     # print(featROIsreg.aggregate_histogram('class').getInfo())
-    dictROIsclass[nbacia] = featROIsreg.aggregate_histogram('class').getInfo()
+    # dictROIsclass[nbacia] = featROIsreg.aggregate_histogram('class').getInfo()
+    print(featROIsreg.aggregate_histogram('year').getInfo())
      # adding the before ROIs with natural class
     # assetROIsBasin = param['asset_roi_basins'] + '/' + name_export 
     # featBefROIs = ee.FeatureCollection(assetROIsBasin)
     # featROIsreg = featROIsreg.merge(featBefROIs)
     
-    save_ROIs_toAsset(featROIsreg, name_export)
+    # save_ROIs_toAsset(featROIsreg, name_export)
     cont = gerenciador(cont)
 
 # with open('dict_ROIs_basin_class_distribution.json', 'w') as arquivo_json:

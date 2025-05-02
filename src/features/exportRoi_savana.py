@@ -36,29 +36,9 @@ except:
 # sys.setrecursionlimit(1000000000)
 
 param = {    
-    'asset_ROIs_manual': {"id" : 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/ROIs/cROIsN2manualNN'},
-    'asset_ROIs_cluster': {"id" : 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/ROIs/cROIsN2clusterNN'},
-    'asset_ROIs_automatic': {"id" : 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/ROIs/coletaROIsv1N245'},
-    'asset_ROIs_automatic': {"id" : 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/ROIs/cROIsN5allBND'},
-    'asset_ROIs_grades': {"id" : 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/ROIs/roisGradesgrouped'},
-    'asset_ROIS_bacia_grade': {'id': 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/ROIs/roisGradesgroupedBuf'},
-    'asset_ROIS_joinsBaGr': {'id': 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/ROIs/roisJoinsbyBaciaNN'},
-    'asset_ROISall_joins': {'id': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_merged_IndAllv3C'},
+    'asset_ROISall_joins': {'id': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_Savana'},
     'anoInicial': 1985,
     'anoFinal': 2024,
-    'numeroTask': 6,
-    'numeroLimit': 50,
-    'conta' : {
-        '0': 'caatinga01',   # 
-        '5': 'caatinga02',
-        '10': 'caatinga03',
-        '15': 'caatinga04',
-        '20': 'caatinga05',        
-        '25': 'solkan1201',    
-        '30': 'solkanGeodatin',
-        '35': 'diegoUEFS',
-        '40': 'superconta'   
-    },
     'showFilesCSV' : False,
     'showAssetFeat': False
 }
@@ -67,42 +47,18 @@ param = {
 list_anos = [k for k in range(param['anoInicial'],param['anoFinal'] + 1)]
 print('lista de anos', list_anos)
 
-#nome das bacias que fazem parte do bioma (38 bacias)
-nameBacias = [
-    '7754', '7691', '7581', '7625', '7584', '751', '7614', 
-    '752', '7616', '745', '7424', '773', '7612', '7613', 
-    '7618', '7561', '755', '7617', '7564', '761111','761112', 
-    '7741', '7422', '76116', '7761', '7671', '7615', '7411', 
-    '7764', '757', '771', '7712', '766', '7746', '753', '764', 
-    '7541', '7721', '772', '7619', '7443', '765', '7544', '7438', 
-    '763', '7591', '7592', '7622', '746'
-]
-# vizinhos selecionados para exportar
-# nameBacias = [
-#     "7438","752","7584","761111","7619","765","7712","773","7746",
-#     "7591", "7615"
-# ]
-
-lstBaciasExp = [
-    '7424', '7581', '745', '752', '7584', '7561', '7591',
-    '761111', '761112', '757', '7592', '755', '7411', '7625'
-]
-
-print(f"processing {len(nameBacias)} bacias ")
 #========================METODOS=============================
-def GetPolygonsfromFolder(dictAsset):
-    
+def GetPolygonsfromFolder(dictAsset):    
     getlistPtos = ee.data.getList(dictAsset)
     ColectionPtos = []
     # print("bacias vizinhas ", nBacias)
-    lstROIsAg = [ ]
     for idAsset in tqdm(getlistPtos):         
         path_ = idAsset.get('id')        
         ColectionPtos.append(path_) 
         name = path_.split("/")[-1]
         if param['showAssetFeat']:
-            print("Reading ", name)
-        
+            print("Reading ", name)        
+    
     return ColectionPtos
 
 
@@ -126,7 +82,7 @@ npath = os.getcwd()
 # get dir folder before to path scripts 
 npath = str(Path(npath).parents[0])
 # folder of CSVs ROIs
-roisPath = '/dados/Col9_ROIs_grades/'
+roisPath = '/dados/Col10_ROIs_grades/'
 npath += roisPath
 print("path of CSVs Rois is \n ==>",  npath)
 
@@ -139,6 +95,13 @@ for xpath in tqdm(lstPathCSV):
         print(" => " + nameCSV)
     lstNameFeat.append(nameCSV)
 
+lstColImp = [
+    'ndfia','gcvi_median_dry','nddi_median_dry','nbr_median_dry','red_median_contrast',
+    'evi_median_dry','osavi_median_dry','ri_median_dry','slope','soil_median_dry',
+    'ui_median_dry','wetness_median_dry','brightness_median_dry','evi_median_wet',
+    'nddi_median_wet','ratio_median_dry','avi_median_dry','osavi_median_wet',
+    'msavi_median_dry', 'msavi_median_wet','classe'
+]
 
 lstNameFeat = [
     "7438","752","7584","761111","7591", "751", "7422",
@@ -153,8 +116,6 @@ lstNameFeat = [
 # lstNameFeat = []
 # sys.exit()
 # iterando com cada uma das folders FeatC do asset
-# 'asset_ROIs_cluster', 'asset_ROIs_manual', asset_ROIs_grades, asset_ROIS_bacia_grade
-# asset_ROIS_joinsBaGr ,asset_ROISall_joins
 lstKeysFolder = ['asset_ROISall_joins']   
 for assetKey in lstKeysFolder:
     lstAssetFolder = GetPolygonsfromFolder(param[assetKey])
@@ -164,10 +125,11 @@ for assetKey in lstKeysFolder:
     for cc, assetFeats in enumerate(lstAssetFolder[:]):        
         nameFeat = assetFeats.split("/")[-1].split("_")[-1]
         # print(nameFeat)
-        if str(nameFeat) not in lstNameFeat:
+        if str(nameFeat) in lstNameFeat:
             print(f" #{cc} loading FeatureCollection => ", assetFeats.split("/")[-1])
             try: 
-                ROIs = ee.FeatureCollection(assetFeats)       
+                ROIs = (ee.FeatureCollection(assetFeats)
+                            .select(lstColImp).remap([1,2], [1, 0], 'classe'))       
                 # print(nameFeat, " ", ROIs.size().getInfo())     
                 processoExportar(ROIs, nameFeat, "ROIs_Joined_Allv3")              
             except:

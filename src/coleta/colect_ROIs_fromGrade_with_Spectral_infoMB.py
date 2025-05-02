@@ -45,10 +45,11 @@ class ClassMosaic_indexs_Spectral(object):
         'asset_grad': 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/basegrade30KMCaatinga',
         'assetMapbiomas90': 'projects/mapbiomas-public/assets/brazil/lulc/collection9/mapbiomas_collection90_integration_v1', 
         'asset_collectionId': 'LANDSAT/COMPOSITES/C02/T1_L2_32DAY',
+        'asset_mosaic': 'projects/nexgenmap/MapBiomas2/LANDSAT/BRAZIL/mosaics-2',
         'asset_mask_toSamples': 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/masks/mask_pixels_toSample', 
         'asset_output': 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/S2/ROIs/coleta2',
         # 'asset_output_grade': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_byGradesInd', 
-        'asset_output_grade': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_byGradesIndV3', 
+        'asset_output_grade': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_byGradesInd_MBV4', 
         # 'asset_output': 'projects/nexgenmap/SAMPLES/Caatinga',
         # Spectral bands selected
         'lsClasse': [4, 3, 12, 15, 18, 21, 22, 33],
@@ -88,12 +89,19 @@ class ClassMosaic_indexs_Spectral(object):
     def __init__(self):
 
         self.regionInterest = ee.FeatureCollection(self.options['asset_grad'])
+        band_year = [nband + '_median' for nband in self.options['bnd_L']]
+        band_drys = [bnd + '_dry' for bnd in band_year]    
+        band_wets = [bnd + '_wet' for bnd in band_year]
+        self.band_mosaic = band_year + band_wets + band_drys
+        lstSat = ["l5","l7","l8"]
         self.imgMosaic = (
-            ee.ImageCollection(self.options['asset_collectionId'])
-                            .filterBounds(self.regionInterest.geometry().bounds())
-                            .select(self.options['bnd_L'])
-        )
-        # print(simgMosaic.first().getInfo())
+            ee.ImageCollection(self.options['asset_mosaic'])
+                            .filter(ee.Filter.inList('biome', self.options['biomas']))
+                            .filter(ee.Filter.inList('satellite', lstSat))
+                            .select(self.band_mosaic)
+        )                                              
+        print("  ", self.imgMosaic.size().getInfo())
+        print("see band Names the first ")
         # self.imgMosaic = simgMosaic#.map(lambda img: self.process_re_escalar_img(img))
                                       
         print("  ", self.imgMosaic.size().getInfo())
@@ -871,123 +879,13 @@ class ClassMosaic_indexs_Spectral(object):
         return imageW  
 
 
-    def make_mosaicofromReducer(self, colMosaic):
-        band_year = [nband + '_median' for nband in self.options['bnd_L']]
-        band_drys = [bnd + '_dry' for bnd in band_year]    
-        band_wets = [bnd + '_wet' for bnd in band_year]
-        # self.bandMosaic = band_year + band_wets + band_drys
-        # print("bandas principais \n ==> ", self.bandMosaic)
-        # bandsDry =None
-        percentilelowDry = 5
-        percentileDry = 35
-        percentileWet = 65
-
-        # get dry season collection
-        evilowDry = (
-            colMosaic.select(['evi'])
-                    .reduce(ee.Reducer.percentile([percentilelowDry]))
-        )
-        eviDry = (
-            colMosaic.select(['evi'])
-                    .reduce(ee.Reducer.percentile([percentileDry]))
-        )        
-
-        collectionDry = (
-            colMosaic.map(lambda img: img.mask(img.select(['evi']).gte(evilowDry))
-                                        .mask(img.select(['evi']).lte(eviDry)))
-        )
-
-        # get wet season collection
-        eviWet = (
-            colMosaic.select(['evi'])        
-                    .reduce(ee.Reducer.percentile([percentileWet]))
-        )
-        collectionWet = (
-            colMosaic.map(lambda img: img.mask(img.select(['evi']).gte(eviWet)))                                        
-        )
-
-        # Reduce collection to median mosaic
-        mosaic = (
-            colMosaic.select(self.options['bnd_L'])
-                .reduce(ee.Reducer.median()).rename(band_year)
-        )
-
-        # get dry median mosaic
-        mosaicDry = (
-            collectionDry.select(self.options['bnd_L'])
-                .reduce(ee.Reducer.median()).rename(band_drys)
-        )
-
-        # get wet median mosaic
-        mosaicWet = (
-            collectionWet.select(self.options['bnd_L'])
-                .reduce(ee.Reducer.median()).rename(band_wets)
-        )
-
-        # get stdDev mosaic
-        mosaicStdDev = (
-            colMosaic.select(self.options['bnd_L'])
-                        .reduce(ee.Reducer.stdDev())
-        )
-
-        mosaic = (mosaic.addBands(mosaicDry)
-                        .addBands(mosaicWet)
-                        .addBands(mosaicStdDev)
-        )
-
-        return mosaic
-    
-    def make_mosaicofromIntervalo(self, colMosaic, year_courrent):
-        band_year = [nband + '_median' for nband in self.options['bnd_L']]
-        band_drys = [bnd + '_dry' for bnd in band_year]    
-        band_wets = [bnd + '_wet' for bnd in band_year]
-
-        dictPer = {
-            'year': {
-                'start': str(str(year_courrent)) + '-01-01',
-                'end': str(year_courrent) + '-12-31',
-                'surf': 'year',
-                'bnds': band_year
-            },
-            'dry': {
-                'start': str(year_courrent) + '-08-01',
-                'end': str(year_courrent) + '-12-31',
-                'surf': 'dry',
-                'bnds': band_drys
-            },
-            'wet': {
-                'start': str(year_courrent) + '-01-01',
-                'end': str(year_courrent) + '-07-31',
-                'surf': 'wet',
-                'bnds': band_wets
-            }
-        }       
-        mosaico = None
-        lstPeriodo = ['year', 'dry', 'wet']
-        for periodo in lstPeriodo:
-            dateStart =  dictPer[periodo]['start']
-            dateEnd = dictPer[periodo]['end']
-            bands_period = dictPer[periodo]['bnds']
-            # get dry median mosaic
-            mosaictmp = (
-                colMosaic.select(self.options['bnd_L'])
-                    .filter(ee.Filter.date(dateStart, dateEnd))
-                    .max()
-                    .rename(bands_period)
-            )
-            if periodo == 'year':
-                mosaico = copy.deepcopy(mosaictmp)
-            else:
-                mosaico = mosaico.addBands(mosaictmp)
-
-        return mosaico
-
     def iterate_bacias(self, idGrade, askSize):        
 
         # loading geometry bacim
     
         oneGrade = ee.FeatureCollection(self.options['asset_grad']).filter(
                                         ee.Filter.eq('indice', int(idGrade)))
+        maskGrade = oneGrade.reduceToImage(['indice'], ee.Reducer.first()).gt(0)
         # print("show size regions ", oneGrade.size().getInfo())                                
         oneGrade = oneGrade.geometry()  
         # print("show area regions ", oneGrade.area().getInfo()) 
@@ -1011,22 +909,15 @@ class ClassMosaic_indexs_Spectral(object):
         for nyear in self.lst_year[:]:
             bandYear = 'classification_' + str(nyear)
             print(f" processing grid_year => {idGrade} <> {bandYear} ")     
-            date_inic =  str(nyear) + '-01-01'      
-            date_end = str(nyear) + '-12-31'
 
-            imgColfiltered = (
-                self.imgMosaic.filter(ee.Filter.date(date_inic, date_end))
-                        .filterBounds(oneGrade)
-            )
 
-            # img_recMosaico = img_recMosaic.map(lambda img: self.calculateBandsIndexEVI(img))
-            # mosaicoBuilded = self.make_mosaicofromReducer(imgColfiltered)
-            mosaicoBuilded = self.make_mosaicofromIntervalo(imgColfiltered, nyear) 
-            # print("metadado bandas names ", mosaicoBuilded.bandNames().getInfo())
+            imgColfiltered =  ( self.imgMosaic.filter(ee.Filter.eq('year', nyear))
+                            .mosaic().updateMask(maskGrade))
+
 
             print("----- calculado todos os old(102) now 123 indices ---------------------")
 
-            img_recMosaicnewB = self.CalculateIndice(mosaicoBuilded.clip(oneGrade))
+            img_recMosaicnewB = self.CalculateIndice(imgColfiltered)
             # bndAdd = img_recMosaicnewB.bandNames().getInfo()            
             # print(f"know bands names Index {len(bndAdd)}")
             # print("  ", bndAdd)
@@ -1065,7 +956,7 @@ class ClassMosaic_indexs_Spectral(object):
                 .sample(
                     region=  oneGrade,  
                     scale= 30,   
-                    numPixels= 5000,
+                    numPixels= 500,
                     dropNulls= True,
                     geometries= True
                 )
@@ -1212,9 +1103,9 @@ if reprocessar:
 param = {
     'anoInicial': 1985,
     'anoFinal': 2024,
-    'changeCount': True,
+    'changeCount': False,
     'numeroTask': 6,
-    'numeroLimit': 110,
+    'numeroLimit': 70,
     'conta': {
         '0': 'caatinga01',
         '10': 'caatinga02',
@@ -1262,7 +1153,7 @@ def gerenciador(cont):
 
 askingbySizeFC = False
 searchFeatSaved = True
-cont = 70
+cont = 0
 if param['changeCount']:
     cont = gerenciador(cont)
 
@@ -1279,7 +1170,7 @@ else:
     lstFeatAsset = []
 print("size of grade geral >> ", len(lstIdCode))
 # sys.exit()
-inicP = 235 # 0, 100
+inicP = 600# 0, 100
 endP = 800   # 100, 200, 300, 600
 for cc, item in enumerate(lstIdCode[inicP:endP]):
     print(f"# {cc + 1 + inicP} loading geometry grade {item}")   

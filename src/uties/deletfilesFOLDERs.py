@@ -65,8 +65,23 @@ def GetPolygonsfromFolder(assetFolder, sufixo, play_eliminar):
 # asset = {'id': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_byGradesIndExt'}
 # asset = {'id': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_Merges_info'}
 # asset = {'id': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_merged_Ind'}
-asset = {'id': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_merged_IndAll'}
+# asset = {'id': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_merged_IndAll'}
 # asset = {'id': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_byGradesIndV3'}
-eliminar_files = True
+# asset = {'id': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_merged_IndAllv3'}
+# asset = {'id': "projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/ROIs/cROIsN245red_allBND"}
+# asset = {'id': "projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/ROIs/cROIsN2clusterNN"}
+# asset = {'id': "projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/ROIs/cROIsN5allBND"}
+# asset = {'id': "projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/ROIs/coletaROIsN2cluster"}
+# asset = {'id': "projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/ROIs/cROIsN2manualNN"}
+# asset = {'id': "projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/ROIs/coletaROIsN2man6bnd"}
+# asset = {'id': "projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/ROIs/coletaROIsN2manual"}
+# asset = {'id': "projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/ROIs/roisGradesgroupBuf"}
+# asset = {'id': "projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/ROIs/roisGradesgroupedBuf"}
+# asset = {'id': "projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/ROIs/roisJoinedBaGrNN"}
+# asset = {'id': "projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/ROIs/roisJoinsbyBaciaNN"}
+asset = {'id': "projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/ROIs/roisredDJoinsbyBaciaNN"}
+
+
+eliminar_files = False
 GetPolygonsfromFolder(asset, '', eliminar_files)  # 
 

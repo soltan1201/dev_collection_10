@@ -133,17 +133,17 @@ def IndiceIndicadorAgua(img):
 
 def agregateBandsIndexEVI(img):
         
-    eviImgY = (img.expression(
-        "float(2.4 * (b('nir_median') - b('red_median')) / (1 + b('nir_median') + b('red_median')))")
-            .rename(['evi_median']).toFloat() )
+    eviImgY = img.expression(
+        "float(2.4 * (b('nir_median') - b('red_median')) / (1 + b('nir_median') + b('red_median')))")\
+            .rename(['evi_median']).toFloat() 
 
-    eviImgWet = (img.expression(
-        "float(2.4 * (b('nir_median_wet') - b('red_median_wet')) / (1 + b('nir_median_wet') + b('red_median_wet')))")
-            .rename(['evi_median_wet']).toFloat()   )
+    eviImgWet = img.expression(
+        "float(2.4 * (b('nir_median_wet') - b('red_median_wet')) / (1 + b('nir_median_wet') + b('red_median_wet')))")\
+            .rename(['evi_median_wet']).toFloat()   
 
-    eviImgDry = (img.expression(
+    eviImgDry = img.expression(
         "float(2.4 * (b('nir_median_dry') - b('red_median_dry')) / (1 + b('nir_median_dry') + b('red_median_dry')))")\
-            .rename(['evi_median_dry']).toFloat()   )
+            .rename(['evi_median_dry']).toFloat()   
     
     return img.addBands(eviImgY).addBands(eviImgWet).addBands(eviImgDry)
 
@@ -603,7 +603,6 @@ def addSlopeAndHilshade(img):
     return img.addBands(slope.rename('slope')).addBands(hillshade.rename('hillshade'))
 
 
-
 def process_re_escalar_img (imgA):
     imgNormal = imgA.select(['slope'], ['slopeA']).divide(1500).toFloat()
     bandMos = copy.deepcopy(arqParams.featureBands)
@@ -658,7 +657,6 @@ def CalculateIndice(imagem):
     imageW = addSlopeAndHilshade(imageW)
 
     return imageW
-
 
 
 def make_mosaicofromReducer(colMosaic):
@@ -810,7 +808,7 @@ def calculate_indices_x_blocos(imageCol):
 #============================================================
 
 
-mosaico = 'mosaico_mapbiomas'
+
 param = {    
     'bioma': "CAATINGA", #nome do bioma setado nos metadados
     'biomas': ["CAATINGA","CERRADO", "MATAATLANTICA"],
@@ -818,12 +816,10 @@ param = {
     'asset_bacias_buffer' : 'projects/ee-solkancengine17/assets/shape/bacias_buffer_caatinga_49_regions',
     # 'asset_bacias_buffer42' : 'projects/mapbiomas-workspace/AMOSTRAS/col7/CAATINGA/bacias_hidrograficaCaatbuffer5k',
     'asset_IBGE': 'users/SEEGMapBiomas/bioma_1milhao_uf2015_250mil_IBGE_geo_v4_revisao_pampa_lagoas',
-    'assetOutMB': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/Classifier/Classify_fromMMBV2',
+    # 'assetOut': 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/Classifier/ClassVY/',
     'assetOut': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/Classifier/ClassifyV2',
-    # 'assetROIgrade': {'id': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_merged_Indall'},   
-    # 'asset_joinsGrBa': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_cleaned_downsamplesv4C',
-    'asset_joinsGrBa': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_cleaned_DS_v4CC',
-    'asset_joinsGrBaMB': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_cleaned_MB_V4C',
+    'assetROIgrade': {'id': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_merged_Indall'},   
+    'asset_joinsGrBa': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_cleaned_downsamplesv4C',
     'outAssetROIs': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/roisJoinedBaGrNN', 
     'classMapB': [3, 4, 5, 9,12,13,15,18,19,20,21,22,23,24,25,26,29,30,31,32,33,36,37,38,39,40,41,42,43,44,45],
     'classNew': [3, 4, 3, 3,12,12,21,21,21,21,21,22,22,22,22,33,29,22,33,12,33, 21,33,33,21,21,21,21,21,21,21],
@@ -864,10 +860,76 @@ param = {
         'seed': 0
     },
     'dict_classChangeBa': arqParams.dictClassRepre
+
 }
 # print(param.keys())
 print("vai exportar em ", param['assetOut'])
+# print(param['conta'].keys())
+# bandNames = [
+#     "swir1_stdDev_1","nir_stdDev_1","green_stdDev_1","ratio_median_dry","gli_median_wet","dswi5_median_dry",
+#     "ri_median","osavi_median","swir2_min","shape_median","mbi_median_dry","wetness_median_dry","green_median_texture_1",
+#     "iia_median_wet","slopeA_1","brba_median_dry","nir_median","lswi_median_wet","red_min","rvi_median","green_min",
+#     "gcvi_median_dry","shape_median_dry","cvi_median_dry","blue_median_dry","mbi_median","nir_median_dry_contrast",
+#     "swir2_median_wet","ui_median_wet","red_median_wet","avi_median","nir_stdDev","swir1_stdDev","red_median_dry",
+#     "gemi_median","osavi_median_dry","blue_median_dry_1","swir2_median_dry_1","brba_median","ratio_median",
+#     "gli_median_dry","blue_min_1","wetness_median","green_median_wet","blue_median_wet_1","brightness_median_wet",
+#     "blue_min","blue_median","red_median_contrast","swir1_min_1","evi_median","blue_stdDev_1","lswi_median_dry",
+#     "blue_median_wet","cvi_median","red_stdDev_1","shape_median_wet","red_median_dry_1","swir2_median_wet_1",
+#     "dswi5_median_wet","red_median_wet_1","afvi_median","ndwi_median","avi_median_wet","gli_median","evi_median_wet",
+#     "nir_median_dry","gvmi_median","cvi_median_wet","swir2_min_1","iia_median","ndwi_median_dry","green_min_1",
+#     "ri_median_dry","osavi_median_wet","green_median_dry","ui_median_dry","red_stdDev","nir_median_wet_1",
+#     "swir1_median_dry_1","red_median_1","nir_median_dry_1","swir1_median_wet","blue_stdDev","bsi_median",
+#     "swir1_median","swir2_median","gvmi_median_dry","red_median","gemi_median_wet","lswi_median",
+#     "brightness_median_dry","awei_median_wet","nir_min","afvi_median_wet","nir_median_wet","evi_median_dry",
+#     "swir2_median_1","ndwi_median_wet","ratio_median_wet","swir2_stdDev","gcvi_median","ui_median","rvi_median_wet",
+#     "green_median_wet_1","ri_median_wet","nir_min_1","rvi_median_1","swir1_median_dry","blue_median_1","green_median_1",
+#     "avi_median_dry","gvmi_median_wet","wetness_median_wet","swir1_median_1","dswi5_median","swir2_stdDev_1",
+#     "awei_median","red_min_1","mbi_median_wet","brba_median_wet","green_stdDev","green_median_texture","swir1_min",
+#     "awei_median_dry","swir1_median_wet_1","gemi_median_dry","nir_median_1","red_median_dry_contrast","bsi_median_1",
+#     "bsi_median_2","nir_median_contrast","green_median_dry_1","afvi_median_dry","gcvi_median_wet","iia_median_dry",
+#     "brightness_median","green_median","swir2_median_dry"
+# ]
 
+# bandasComuns = [
+#     'slope', 'blue_median', 'blue_median_wet', 'blue_median_dry', 'blue_min', 'blue_stdDev', 'green_median', 
+#     'green_median_wet', 'green_median_dry', 'green_min', 'green_stdDev', 'green_median_texture', 'red_median', 
+#     'red_median_wet', 'red_median_dry', 'red_min', 'red_stdDev', 'nir_median', 'nir_median_wet', 'nir_median_dry', 
+#     'nir_min', 'nir_stdDev', 'swir1_median', 'swir1_median_wet', 'swir1_median_dry', 'swir1_min', 'swir1_stdDev', 
+#     'swir2_median', 'swir2_median_wet', 'swir2_median_dry', 'swir2_min', 'swir2_stdDev', 'slopeA', 'ratio_median', 
+#     'rvi_median', 'ndwi_median', 'awei_median', 'iia_median', 'gcvi_median', 'gemi_median', 'cvi_median', 'gli_median', 
+#     'shape_median', 'afvi_median', 'avi_median', 'bsi_median', 'brba_median', 'dswi5_median', 'lswi_median', 'mbi_median', 
+#     'ui_median', 'osavi_median', 'ri_median', 'brightness_median', 'wetness_median', 'nir_contrast_median', 
+#     'red_contrast_median', 'ratio_median_dry', 'rvi_median_dry', 'ndwi_median_dry', 'awei_median_dry', 'iia_median_dry', 
+#     'gcvi_median_dry', 'gemi_median_dry', 'cvi_median_dry', 'gli_median_dry', 'shape_median_dry', 'afvi_median_dry', 
+#     'avi_median_dry', 'bsi_median_dry', 'brba_median_dry', 'dswi5_median_dry', 'lswi_median_dry', 'mbi_median_dry', 
+#     'ui_median_dry', 'osavi_median_dry', 'ri_median_dry', 'brightness_median_dry', 'wetness_median_dry', 
+#     'nir_contrast_median_dry', 'red_contrast_median_dry', 'ratio_median_wet', 'rvi_median_wet', 
+#     'ndwi_median_wet', 'awei_median_wet', 'iia_median_wet', 'gcvi_median_wet', 'gemi_median_wet', 
+#     'cvi_median_wet', 'gli_median_wet', 'shape_median_wet', 'afvi_median_wet', 'avi_median_wet', 
+#     'bsi_median_wet', 'brba_median_wet', 'dswi5_median_wet', 'lswi_median_wet', 'mbi_median_wet', 
+#     'ui_median_wet', 'osavi_median_wet', 'ri_median_wet', 'brightness_median_wet', 'wetness_median_wet', 
+#     'nir_contrast_median_wet', 'red_contrast_median_wet'
+# ]
+# bandasComunsCorr = [
+#     'slope', 'blue_median_1', 'blue_median_wet_1', 'blue_median_dry_1', 'blue_min_1', 'blue_stdDev_1', 'green_median_1', 
+#     'green_median_wet_1', 'green_median_dry_1', 'green_min_1', 'green_stdDev_1', 'green_median_texture_1', 'red_median_1', 
+#     'red_median_wet_1', 'red_median_dry_1', 'red_min_1', 'red_stdDev_1', 'nir_median_1', 'nir_median_wet_1', 'nir_median_dry_1', 
+#     'nir_min_1', 'nir_stdDev_1', 'swir1_median_1', 'swir1_median_wet_1', 'swir1_median_dry_1', 'swir1_min_1', 'swir1_stdDev_1', 
+#     'swir2_median_1', 'swir2_median_wet_1', 'swir2_median_dry_1', 'swir2_min_1', 'swir2_stdDev_1', 'slopeA_1', 'ratio_median', 
+#     'rvi_median', 'ndwi_median', 'awei_median', 'iia_median', 'gcvi_median', 'gemi_median', 'cvi_median', 'gli_median', 
+#     'shape_median', 'afvi_median', 'avi_median', 'bsi_median', 'brba_median', 'dswi5_median', 'lswi_median', 'mbi_median', 
+#     'ui_median', 'osavi_median', 'ri_median', 'brightness_median', 'wetness_median', 'nir_contrast_median', 
+#     'red_contrast_median', 'ratio_median_dry', 'rvi_median_dry', 'ndwi_median_dry', 'awei_median_dry', 'iia_median_dry', 
+#     'gcvi_median_dry', 'gemi_median_dry', 'cvi_median_dry', 'gli_median_dry', 'shape_median_dry', 'afvi_median_dry', 
+#     'avi_median_dry', 'bsi_median_dry', 'brba_median_dry', 'dswi5_median_dry', 'lswi_median_dry', 'mbi_median_dry', 
+#     'ui_median_dry', 'osavi_median_dry', 'ri_median_dry', 'brightness_median_dry', 'wetness_median_dry', 
+#     'nir_contrast_median_dry', 'red_contrast_median_dry', 'ratio_median_wet', 'rvi_median_wet', 
+#     'ndwi_median_wet', 'awei_median_wet', 'iia_median_wet', 'gcvi_median_wet', 'gemi_median_wet', 
+#     'cvi_median_wet', 'gli_median_wet', 'shape_median_wet', 'afvi_median_wet', 'avi_median_wet', 
+#     'bsi_median_wet', 'brba_median_wet', 'dswi5_median_wet', 'lswi_median_wet', 'mbi_median_wet', 
+#     'ui_median_wet', 'osavi_median_wet', 'ri_median_wet', 'brightness_median_wet', 'wetness_median_wet', 
+#     'nir_contrast_median_wet', 'red_contrast_median_wet'
+# ]
 #============================================================
 #========================METODOS=============================
 #============================================================
@@ -921,11 +983,9 @@ def save_ROIs_toAsset(collection, name):
 
     
 #exporta a imagem classificada para o asset
-def processoExportar(mapaRF, regionB, nameB, proc_mosaicEE):
+def processoExportar(mapaRF, regionB, nameB):
     nomeDesc = 'BACIA_'+ str(nameB)
-    idasset =  os.path.join(param['assetOut'] , nomeDesc)
-    if not proc_mosaicEE:
-        idasset = param['assetOutMB']
+    idasset =  param['assetOut'] + "/" + nomeDesc
     optExp = {
         'image': mapaRF, 
         'description': nomeDesc, 
@@ -943,7 +1003,159 @@ def processoExportar(mapaRF, regionB, nameB, proc_mosaicEE):
     for keys, vals in dict(task.status()).items():
         print ( "  {} : {}".format(keys, vals))
 
+def process_reduce_ROIsXclass(featColROIs, featColROIsbase ,lstclassVal, dfProp, mbacia):
+    # 12': 1304, '15': 1247, '18': 1280, '22': 1635, '3': 1928, '33': 1361, '4': 1378
+    dictQtLimit = {
+        3: 600,
+        4: 2500,
+        12: 600,
+        15: 1200,
+        18: 900,
+        21: 1200,
+        22: 1000,
+        33: 400
+    }
+    nFeatColROIs = ee.FeatureCollection([])
+    lstBac21 = ["76111","76116","7742","757","758","759","771","772","773","775","776","777"]
+    listLitoral = ["7584","7612","7561","755","7564","7541","7544"]
+    lstLitoral = ['758','761','756','755','754']
+    for ccclass in lstclassVal:
+        # print("classse ", ccclass)
+        if ccclass in [15, 18]:
+            myClass = 21
+        else:
+            myClass = int(ccclass)
+        try:
+            valpropCC = dfProp[dfProp['classe'] == myClass]['area_prob'].values[0]
+            if ccclass == 21 and str(mbacia) not in ['771', '7613', '7617', '7615']:
+                valpropCC += 0.1
+            if str(mbacia) in ['771', '7613', '7617', '7615'] and ccclass == 4:
+                valpropCC += 0.15
 
+            if str(mbacia) in ['776', '757', '758'] and ccclass == 3:   # 7622
+                valpropCC += 0.1
+
+            if ccclass == 3:
+                if valpropCC < 0.05:
+                    valpropCC = 0.15
+            if str(mbacia) in lstBac21:
+                if ccclass == 21:
+                    valpropCC += 0.25
+            
+        except:
+            valpropCC = 0.01
+
+        if str(mbacia) in lstLitoral and ccclass == 4:
+            valpropCC = 0.05
+            dictQtLimit[ccclass] = 400
+
+        if str(mbacia) in ['754','756', '7614','7421'] and ccclass == 4:
+            valpropCC = 0.2
+            dictQtLimit[ccclass] = 1300
+        if str(mbacia) in ['753', '752'] and ccclass == 4:
+            valpropCC = 0.2
+            dictQtLimit[ccclass] = 800
+        # print(" valpropCC ", valpropCC)
+        tmpROIs = featColROIs.filter(ee.Filter.eq('class', int(ccclass))).randomColumn('random')
+        threhold = ee.Number(dictQtLimit[ccclass]).multiply(valpropCC).divide(tmpROIs.size())
+        tmpROIs = tmpROIs.filter(ee.Filter.lte('random', threhold))
+        
+        tmpROIff = featColROIsbase.filter(ee.Filter.eq('class', int(ccclass))).randomColumn('random')
+        threhold2 = ee.Number(dictQtLimit[ccclass]).divide(tmpROIff.size())
+        tmpROIff = tmpROIff.filter(ee.Filter.lte('random', threhold2))
+        # if ccclass  == 4:
+        #     print("size class 4 ", tmpROIs.size().getInfo())
+        #     print("size class 4 ", tmpROIff.size().getInfo(), "  ", valpropCC)
+
+        if str(mbacia) in ['771', '7613', '7617', '7615'] and ccclass == 12:
+            tmpROIs = tmpROIs.limit(200)
+            tmpROIff = tmpROIff.limit(200)
+        if str(mbacia) in ['757', '758'] and ccclass == 12:
+            tmpROIs = tmpROIs.limit(350)
+            tmpROIff = tmpROIff.limit(350)
+        if ccclass == 22:
+            tmpROIs = tmpROIs.limit(100)
+            tmpROIff = tmpROIff.limit(100)
+        if ccclass == 4 and str(mbacia) in lstBac21:
+            tmpROIs = tmpROIs.limit(1000)
+            tmpROIff = tmpROIff.limit(1000)
+
+        nFeatColROIs = nFeatColROIs.merge(tmpROIs).merge(tmpROIff)
+    
+    return nFeatColROIs
+
+def reduce_duplicidade(mList):
+    tmplist = []
+    for kk in mList:
+        if kk not in tmplist:
+            tmplist.append(kk)
+    return tmplist
+
+def GetPolygonsfromFolder(nBacias, lstClasesBacias, yyear):    
+    # print("lista de classe ", lstClasesBacias)
+    getlistPtos = ee.data.getList(param['assetROIgrade'])
+    ColectionPtos = ee.FeatureCollection([])
+    dictQtLimit = {
+        3: 800,
+        4: 5500,
+        12: 1600,
+        15: 1200,
+        18: 800,
+        21: 1500,
+        22: 1200,
+        33: 400
+    }
+    for idAsset in getlistPtos:         
+        path_ = idAsset.get('id')
+        lsFile =  path_.split("/")
+        name = lsFile[-1]
+        newName = name.split('_')[-1]
+        # print("cole", str(newName))
+        if str(newName) in str(nBacias) :  #and str(newName[1]) == str(yyear)
+            # print(f"reading year {yyear} from basin {name}")
+            FeatTemp = ee.FeatureCollection(path_)
+             # print(FeatTemp.size().getInfo())
+            ColectionPtos = ColectionPtos.merge(FeatTemp) # .select(bandasComunsCorr)
+    nFeatColROIs = ee.FeatureCollection([])
+    for ccclass in lstClasesBacias:
+        tmpROIs = ColectionPtos.filter(ee.Filter.eq('class', int(ccclass))).randomColumn('random')
+        threhold = ee.Number(dictQtLimit[ccclass]).divide(tmpROIs.size())
+        tmpROIs = tmpROIs.filter(ee.Filter.lte('random', threhold))
+        nFeatColROIs = nFeatColROIs.merge(tmpROIs)
+
+    return  ee.FeatureCollection(nFeatColROIs)
+
+
+def FiltrandoROIsXimportancia(nROIs, baciasAll, nbacia):
+    limitCaat = ee.FeatureCollection('users/CartasSol/shapes/nCaatingaBff3000')
+    # selecionando todas as bacias vizinhas 
+    baciasB = baciasAll.filter(ee.Filter.eq('nunivotto3', nbacia))
+    # limitando pelo bioma novo com buffer
+    baciasB = baciasB.geometry().buffer(2000).intersection(limitCaat.geometry())
+    # filtrando todo o Rois pela área construida 
+    redROIs = nROIs.filterBounds(baciasB)
+    mhistogram = redROIs.aggregate_histogram('class').getInfo()
+    ROIsEnd = ee.FeatureCollection([])
+    
+    roisT = ee.FeatureCollection([])
+    for kk, vv in mhistogram.items():
+        print("class {}: == {}".format(kk, vv))
+        
+        roisT = redROIs.filter(ee.Filter.eq('class', int(kk)))
+        roisT =roisT.randomColumn()
+        
+        if int(kk) == 4:
+            roisT = roisT.filter(ee.Filter.gte('random',0.5))
+            # print(roisT.size().getInfo())
+
+        elif int(kk) != 21:
+            roisT = roisT.filter(ee.Filter.lte('random',0.9))
+            # print(roisT.size().getInfo())
+
+        ROIsEnd = ROIsEnd.merge(roisT)
+        # roisT = None
+    
+    return ROIsEnd
 
 def check_dir(file_name):
     if not os.path.exists(file_name):
@@ -961,9 +1173,36 @@ def getPathCSV (nfolder):
     print("path of CSVs Rois is \n ==>",  mpath)
     return mpath
 
+def clean_lstBandas(tmplstBNDs):
+    lstFails = ['green_median_texture']
+    lstbndsRed = []
+    for bnd in tmplstBNDs:
+        bnd = bnd.replace('_1','')
+        bnd = bnd.replace('_2','')
+        bnd = bnd.replace('_3','')
+        if bnd not in lstbndsRed and 'min' not in bnd and bnd not in lstFails and 'stdDev' not in bnd:
+            lstbndsRed.append(bnd)
+    return lstbndsRed
+
+dictPmtroArv = {
+    '35': [
+            '741', '746', '753', '766', '7741', '778', 
+            '7616', '7617', '7618', '7619'
+    ],
+    '50': [
+            '7422', '745', '752', '758', '7621', 
+            '776', '777',  '7612', '7615'# 
+    ],
+    '65':  [
+            '7421','744','7492','751',
+            '754','755','756','757','759','7622','763','764',
+            '765','767','771','772','773', '7742','775',
+            '76111','76116','7614','7613'
+    ]
+}
 
 tesauroBasin = arqParams.tesauroBasin
-lstSat = ["l5","l7","l8"]
+lstSat = ["l5","l7","l8"];
 pathJson = getPathCSV("regJSON/")
 
 def get_bands_mosaicos ():
@@ -1000,20 +1239,31 @@ pathFSJson = getPathCSV("FS_col10_json/")
 print("==== path of CSVs of Features Selections ==== \n >>> ", pathFSJson)
 lstBandMB = get_bands_mosaicos()
 print("bandas mapbiomas ", lstBandMB)
-
+lstCoef = [0.8425, 0.8957, 0.9097, 0.3188, 0.969, 0.9578]
+bandsCoef = ee.Image.constant(lstCoef + lstCoef + lstCoef)
+lstIntercept = [106.7546, 115.1553, 239.0688, 1496.4408, 392.3453, 366.57]
+bandsIntercept = ee.Image.constant(lstIntercept + lstIntercept + lstIntercept)
 
 # sys.exit()
-def iterandoXBacias( _nbacia, myModel, makeProb, process_mosaic_EE):
+def iterandoXBacias( _nbacia, myModel, makeProb):
     exportatROIS = False
-    fazerSimples = True
+    classifiedRF = None;
     # selectBacia = ftcol_bacias.filter(ee.Filter.eq('nunivotto3', _nbacia)).first()
     # https://code.earthengine.google.com/2f8ea5070d3f081a52afbcfb7a7f9d25 
 
+    dfareasCC = pd.read_csv('areaXclasse_CAATINGA_Col71_red.csv')
+    print("df areas CC ", dfareasCC.columns)
+    dfareasCC = dfareasCC[dfareasCC['Bacia'] == tesauroBasin[_nbacia]]
+    print(" dfareasCC shape table ", dfareasCC.shape)
+    # if _nbacia in ['761111', '761112']:        
+    #     # asset_bacias_buffer42
+    #     baciabuffer = ee.FeatureCollection(param['asset_bacias_buffer42']).filter(
+    #                         ee.Filter.eq('nunivotto4', tesauroBasin[_nbacia]))
+    # else:
     baciabuffer = ee.FeatureCollection(param['asset_bacias_buffer']).filter(
                         ee.Filter.eq('nunivotto4', _nbacia))
     print(f"know about the geometry 'nunivotto4' >>  {_nbacia
-                    } loaded < {baciabuffer.size().getInfo()} > geometry" )  
-    bacia_raster =  baciabuffer.reduceToImage(['id_codigo'], ee.Reducer.first()).gt(0)  
+                    } loaded < {baciabuffer.size().getInfo()} > geometry" )    
     baciabuffer = baciabuffer.geometry()
 
     # https://code.earthengine.google.com/48effe10e1fffbedf2076a53b472be0e?asset=projects%2Fgeo-data-s%2Fassets%2Ffotovoltaica%2Fversion_4%2Freg_00000000000000000017_2015_10_pred_g2c
@@ -1048,6 +1298,8 @@ def iterandoXBacias( _nbacia, myModel, makeProb, process_mosaic_EE):
 
     mydict = None
     pmtroClass = copy.deepcopy(param['pmtGTB'])
+
+
     # print("area ", baciabuffer.area(0.1).getInfo())
 
     path_ptrosFS = os.path.join(pathFSJson, f"feat_sel_{_nbacia}.json")
@@ -1067,66 +1319,67 @@ def iterandoXBacias( _nbacia, myModel, makeProb, process_mosaic_EE):
         bandActiva = 'classification_' + str(nyear)        
         print( "banda activa: " + bandActiva) 
 
+        if nyear < 2022:
+            dfareasccYY = dfareasCC[dfareasCC['year'] == nyear][['area', 'classe']]
+            total = dfareasccYY['area'].sum()
+            dfareasccYY['area_prob'] = dfareasccYY['area'] / total
+            # print(" ", dfareasccYY.head(9))
+
+
+
         # nameFeatROIs = 'rois_grade_' + _nbacia
         nameFeatROIs =  f"{_nbacia}_{nyear}_cd"  
         print("loading Rois JOINS = ", nameFeatROIs)
-        asset_rois = param['asset_joinsGrBa']
-        if not process_mosaic_EE:
-            asset_rois = param['asset_joinsGrBaMB']
-
-        
+        ROIs_toTrain = (
+            ee.FeatureCollection(param['asset_joinsGrBa'] + '/' + nameFeatROIs) 
+                        # .filter(ee.Filter.eq("year", nyear))  
+                        .filter(ee.Filter.inList('class', lstClassesUn))  
+        )                  
+        # ROIs_toTrainViz = GetPolygonsfromFolder(lstSoVizConv, lstClassesUn, nyear)
+        # ROIs_toTrain = process_reduce_ROIsXclass(ROIs_toTrain, ROIs_toTrainViz, lstClassesUn, dfareasccYY, _nbacia)
+        #     ROIs_toTrain = ROIs_toTrain.map(lambda feat: feat.set('class', ee.Number(feat.get('class')).toInt8()))
+        # ROIs_toTrain = ROIs_toTrain.filter(ee.Filter.notNull(bandas_imports))
+        # print(f"===  {ROIs_toTrain.aggregate_histogram('class').getInfo()}  ===") 
+        # print(f"=== vizinhas {ROIs_toTrainViz.aggregate_histogram('class').getInfo()}  ===") 
+        # sys.exit()
+        # excluindo a classe 12
+        if '745' == tesauroBasin[_nbacia]:
+            ROIs_toTrain = ROIs_toTrain.filter(ee.Filter.neq('class', 12))
         # bandas_ROIs = [kk for kk in ROIs_toTrain.first().propertyNames().getInfo()]  
-        # print("distribuição de pontos ", ROIs_toTrain.aggregate_histogram('class').getInfo())        
+        # print()    
+        # ROIs_toTrain  = ROIs_toTrain.filter(ee.Filter.notNull(bandasComuns))
+        if exportatROIS:
+            save_ROIs_toAsset(ROIs_toTrain, nameFeatROIs + "_red")
+
+        # lstBandasBuildROIs = ROIs_toTrain.first().propertyNames().getInfo()
+        # print(f" we have {len(lstBandasBuildROIs)} properties of samples from mosaic ")
         
 
-        # cria o mosaico a partir do mosaico total, cortando pelo poligono da bacia 
-        date_inic = ee.Date.fromYMD(int(nyear),1,1)      
-        date_end = ee.Date.fromYMD(int(nyear),12,31)   
-        if process_mosaic_EE:
-            # de mosaico EE y para mosaico Mapbiomas (X)
-            lstCoef = [0.8425, 0.8957, 0.9097, 0.3188, 0.969, 0.9578]
-            bandsCoef = ee.Image.constant(lstCoef + lstCoef + lstCoef)
-            lstIntercept = [106.7546, 115.1553, 239.0688, 1496.4408, 392.3453, 366.57]
-            bandsIntercept = ee.Image.constant(lstIntercept + lstIntercept + lstIntercept)
+        #cria o mosaico a partir do mosaico total, cortando pelo poligono da bacia    
+        colmosaicMapbiomas = imagens_mosaico.filter(ee.Filter.eq('year', nyear)).median()
+        imagens_mosaicoEEv = colmosaicMapbiomas.multiply(bandsCoef).add(bandsIntercept) 
+        imagens_mosaicoEEv = imagens_mosaicoEEv.divide(10000)#.rename(param.bnd_L)
+        # print(f" we have {imagens_mosaicoEEv.bandNames().getInfo()} images ")
 
-            colmosaicMapbiomas = imagens_mosaico.filter(ee.Filter.eq('year', nyear)).median()
-            imagens_mosaicoEEv = colmosaicMapbiomas.multiply(bandsCoef).add(bandsIntercept) 
-            imagens_mosaicEEv = imagens_mosaicoEEv.divide(10000)#.rename(param.bnd_L)
-            # print(f" we have {imagens_mosaicoEEv.bandNames().getInfo()} images ")
+        date_inic =  str(nyear) + '-01-01'      
+        date_end = str(nyear) + '-12-31'
+        #cria o mosaico a partir do mosaico total, cortando pelo poligono da bacia    
+        mosaicColGoogle = imagens_mosaicoEE.filter(ee.Filter.date(date_inic, date_end))        
+        mosaicoBuilded = make_mosaicofromIntervalo(mosaicColGoogle, nyear) 
+        # print(f" we have {mosaicoBuilded.bandNames().getInfo()} images ")
+        maskGaps = mosaicoBuilded.unmask(-1000).eq(-1000)
+        ## preenchendo o gap do mosaico do EE pelo mosaico dao mapbiomas
+        mosaicoBuilded = mosaicoBuilded.unmask(0).where(maskGaps, imagens_mosaicoEEv)
+        # print(f" we have {mosaicoBuilded.bandNames().getInfo()} images ")
         
-            #cria o mosaico a partir do mosaico total, cortando pelo poligono da bacia    
-            mosaicColGoogle = imagens_mosaicoEE.filter(ee.Filter.date(date_inic, date_end))        
-            mosaicoBuilded = make_mosaicofromIntervalo(mosaicColGoogle, nyear) 
-            # print(f" we have {mosaicoBuilded.bandNames().getInfo()} images ")
-            maskGaps = mosaicoBuilded.unmask(-1000).eq(-1000)
-            ## preenchendo o gap do mosaico do EE pelo mosaico dao mapbiomas
-            mosaicoBuilded = mosaicoBuilded.unmask(0).where(maskGaps, imagens_mosaicEEv)
-            # print(f" we have {mosaicoBuilded.bandNames().getInfo()} images ")
-        else:
+        print("----- calculado todos os 102 indices ---------------------")
+        mosaicProcess = CalculateIndice(mosaicoBuilded)
 
-            # de mosaico Mapbiomas para mosaico EE (X)
-            lstCoef = [6499.0873, 8320.9741, 7243.8252, 5944.0973, 7494.4502, 7075.1618]
-            bandsCoef = ee.Image.constant(lstCoef + lstCoef + lstCoef)
-            lstIntercept = [64.0821, 55.127, 36.7782, 1417.7931, 325.8045, 141.9352]
-            bandsIntercept = ee.Image.constant(lstIntercept + lstIntercept + lstIntercept)             
-
-            #cria o mosaico a partir do mosaico total, cortando pelo poligono da bacia    
-            mosaicColGoogle = imagens_mosaicoEE.filter(ee.Filter.date(date_inic, date_end))        
-            mosaicoGoogle = make_mosaicofromIntervalo(mosaicColGoogle, nyear) 
-            imagens_mosaicoEEv = mosaicoGoogle.multiply(bandsCoef).add(bandsIntercept)
-            
-            colmosaicMapbiomas = imagens_mosaico.filter(ee.Filter.eq('year', nyear)).median()
-            maskGaps = colmosaicMapbiomas.unmask(-1000).eq(-1000)
-            ## preenchendo o gap do mosaico do EE pelo mosaico dao mapbiomas
-            ## preenchendo o gap do mosaico do EE pelo mosaico dao mapbiomas
-            mosaicoBuilded = colmosaicMapbiomas.unmask(0).where(maskGaps, imagens_mosaicoEEv)
-            # print(f" we have {mosaicoBuilded.bandNames().getInfo()} images ")
-
-        # lstBandasBuildMoisac = mosaicProcess.bandNames().getInfo()
-        # print(f" we have {len(lstBandasBuildMoisac)} bands builded in the mosaic ")
+        lstBandasBuildMoisac = mosaicProcess.bandNames().getInfo()
+        print(f" we have {len(lstBandasBuildMoisac)} bands builded in the mosaic ")
 
         #cria o classificador com as especificacoes definidas acima 
-        limitlsb = 15
+        limitlsb = 45
         # print( bandas_fromFS[f"{_nbacia}_{nyear}"])
         
         lstbandas_import = bandas_fromFS[f"{_nbacia}_{nyear}"]['features']
@@ -1138,26 +1391,8 @@ def iterandoXBacias( _nbacia, myModel, makeProb, process_mosaic_EE):
             bandas_imports += ['slope']
         if 'hillshade' not in bandas_imports:
             bandas_imports += ['hillshade']
+
         print(f" numero de bandas selecionadas {len(bandas_imports)} ")  
-
-
-        print("----- calculado todos os 102 indices ---------------------")
-        mosaicProcess = CalculateIndice(mosaicoBuilded.updateMask(bacia_raster))
-        mosaicProcess = mosaicProcess.select(bandas_imports)
-        print(f" we have {mosaicProcess.bandNames().getInfo()} images ")
-
-
-        ROIs_toTrain = (
-            ee.FeatureCollection( os.path.join(asset_rois, nameFeatROIs)) 
-                        # .filter(ee.Filter.eq("year", nyear))  
-                        .filter(ee.Filter.inList('class', lstClassesUn))  
-                        .select(bandas_imports + ['class'])
-        )       
-        # excluindo a classe 12
-        if '745' == tesauroBasin[_nbacia]:
-            ROIs_toTrain = ROIs_toTrain.filter(ee.Filter.neq('class', 12))           
-        # sys.exit()
-
         ### --------------------------------------------------------###
         ### ---- limpando a lista de bandas importantes  -----------###
         # lstSearch = []
@@ -1167,12 +1402,12 @@ def iterandoXBacias( _nbacia, myModel, makeProb, process_mosaic_EE):
         #         bandas_imports.remove(nbandsM)
         # print("bandas em importancias que não estão nos ROIs \n ", lstSearch)
 
-        # lstSearch = []
-        # for nbandsM in bandas_imports:
-        #     if nbandsM not in lstBandasBuildMoisac:
-        #         lstSearch.append(nbandsM)
-        #         bandas_imports.remove(nbandsM)
-        # print("bandas em importancias que não estão no mosaico \n ", lstSearch)        
+        lstSearch = []
+        for nbandsM in bandas_imports:
+            if nbandsM not in lstBandasBuildMoisac:
+                lstSearch.append(nbandsM)
+                bandas_imports.remove(nbandsM)
+        print("bandas em importancias que não estão no mosaico \n ", lstSearch)        
         # sys.exit()
 
         print("parameter loading ", dictHiperPmtTuning[_nbacia])
@@ -1186,14 +1421,10 @@ def iterandoXBacias( _nbacia, myModel, makeProb, process_mosaic_EE):
             pmtroClass['shrinkage'] = 0.1    # 
         else:            
             pmtroClass['shrinkage'] = dictHiperPmtTuning[_nbacia]['learning_rate']
-            lstBacias_prob = [ '7541', '7544', '7584', '7592', '7612', '7615',  '7712', '7721', '7741', '7746']
-            if _nbacia in lstBacias_prob:
-                numberTrees = 5
-                if dictHiperPmtTuning[_nbacia]["n_estimators"] < numberTrees:
-                    pmtroClass['numberOfTrees'] = dictHiperPmtTuning[_nbacia]["n_estimators"] - 3
-                else:
-                    pmtroClass['numberOfTrees'] = numberTrees       
-
+            if dictHiperPmtTuning[_nbacia]["n_estimators"] < 18:
+                pmtroClass['numberOfTrees'] = dictHiperPmtTuning[_nbacia]["n_estimators"] - 3
+            else:
+                pmtroClass['numberOfTrees'] = 18       
         print("pmtros Classifier ==> ", pmtroClass)
 
         # ee.Classifier.smileGradientTreeBoost(numberOfTrees, shrinkage, samplingRate, maxNodes, loss, seed)
@@ -1227,11 +1458,15 @@ def iterandoXBacias( _nbacia, myModel, makeProb, process_mosaic_EE):
             imglsClasxanos = imglsClasxanos.addBands(classifiedGTB)  
                                     
         
-  
-    imglsClasxanos = imglsClasxanos.select(param['lsBandasMap'])    
-    imglsClasxanos = imglsClasxanos.set("system:footprint", baciabuffer.coordinates())
-    # exporta bacia
-    processoExportar(imglsClasxanos, baciabuffer.coordinates(), nomec, process_mosaic_EE)         
+    # i+=1
+    # print(param['lsBandasMap'])   
+    if not exportatROIS: 
+        # seta as propriedades na imagem classificada    
+        # print("show names bands of imglsClasxanos ", imglsClasxanos.bandNames().getInfo() )        
+        imglsClasxanos = imglsClasxanos.select(param['lsBandasMap'])    
+        imglsClasxanos = imglsClasxanos.clip(baciabuffer).set("system:footprint", baciabuffer.coordinates())
+        # exporta bacia
+        processoExportar(imglsClasxanos, baciabuffer.coordinates(), nomec)         
          
         
     # sys.exit()
@@ -1272,28 +1507,25 @@ nameBacias = [
     '763', '7591', '7592', '7622', '746'
 ]
 print(f"we have {len(nameBacias)} bacias")
-# "761112",procMosaicEE
+# "761112",
 modelo = "GTB"
 knowMapSaved = False
-procMosaicEE = True
 listBacFalta = [
-    '7584', '7616', '7612', '7618', '7561', '755', '7617', '7564', '7741', '76116', '7615', '757', '7712', '7746', '7541', '7619', '7544', '763', '7592'
+    '7584', '7616', '7612', '7618', '7561', '755', '7617', '7564', '7741', '76116', '7615',
+     '757', '7712', '7746', '7541', '7619', '7544', '763', '7592'
 ]
 # listBacFalta = []
 lst_bacias_proc = [item for item in nameBacias if item in listBacFalta]
-# bacias_prioritarias = [
-#     '7411',  '746', '7541', '7544', '7591', '7592', '761111', '761112', '7612', '7613', '7614', 
-#     '7615', '771', '7712', '772', '7721', '773', '7741', '7746', '7754', '7761', '7764'
-# ]
-
 bacias_prioritarias = [
-    '7541', '7544', '7592', '7612', '7615',  '7712', '7721', '7741', '7746'
+    '7411', '7443', '746', '7541', '7544', '7591', '7592', '761111', '761112', '7612', '7613', '7614', 
+    '7615', '771', '7712', '772', '7721', '773', '7741', '7746', '7754', '7761', '7764'
 ]
-print(lst_bacias_proc)
-cont = 15
+
+
+cont = 0
 cont = gerenciador(cont)
 # sys.exit(0)
-for _nbacia in bacias_prioritarias[1:]:
+for _nbacia in lst_bacias_proc[:]:
     if knowMapSaved:
         try:
             nameMap = 'BACIA_' + _nbacia + '_' + 'GTB_col10-v' + str(param['version'])
@@ -1305,9 +1537,9 @@ for _nbacia in bacias_prioritarias[1:]:
         print("-------------------.kmkl---------------------------------------------")
         print(f"--------    classificando bacia nova {_nbacia} and seus properties da antinga {tesauroBasin[_nbacia]}-----------------")   
         print("---------------------------------------------------------------------") 
-        iterandoXBacias(_nbacia, modelo, False, procMosaicEE) 
+        iterandoXBacias(_nbacia, modelo, False) 
         arqFeitos.write(_nbacia + '\n')
-        # cont = gerenciador(cont) 
+        cont = gerenciador(cont) 
 
     # sys.exit()
 arqFeitos.close()

@@ -19,6 +19,32 @@ except:
     print("Unexpected error:", sys.exc_info()[0])
     raise
 
+def Get_Remove_Array_from_ImgCol(asset_imgcol, fVers= False, vers= 1, fJanela= False, janele= 3, fList= False, lsBacias= [], play_eliminar= False):
+
+    
+    imgCol = ee.ImageCollection(asset_imgcol)
+    
+    if fVers:
+        imgCol = imgCol.filter(ee.Filter.eq('version', vers))
+    if fJanela:
+        imgCol = imgCol.filter(ee.Filter.eq('janela', 4))    
+    if fList:
+        imgCol = imgCol.filter(ee.Filter.inList('bacia', lsBacias))
+    
+    lst_id = imgCol.reduceColumns(ee.Reducer.toList(), ['system:index']).get('list').getInfo()
+    print(f'we will eliminate {len(lst_id)} file image from {asset_imgcol} ')
+    
+    for cc, idss in enumerate(lst_id):    
+        path_ = str(asset_imgcol + '/' + idss)    
+        print (f"... eliminando ❌ ... item 📍{cc}/{len(lst_id)} : {idss}  ▶️ ")    
+        try:
+            if play_eliminar:
+                ee.data.deleteAsset(path_)
+                print(" > " , path_)
+        except:
+            print(f" {path_} -- > NAO EXISTE!")
+
+
 # asset = 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/masks/maks_estaveis_v2'
 # asset = 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/masks/maks_coinciden'
 # asset = 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/masks/maks_fire_w5'
@@ -32,32 +58,20 @@ except:
 # asset = 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/S2/POS-CLASS/clean_water'
 # asset = 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/Validation/aggrements'
 # asset = 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/Classifier/ClassV1'
-asset = 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/Classifier/ClassVP'
-# lsBacias = [
-    # '741','7421','7422','744','745','746','7492','751','752','753',
-    # '754','755','756','757','758','759','7621','7622', '763','764',
-    # '765','766', '767','771','772','773', '7741','7742','775','776',
-    # '777','778','76111','76116', '7614','7616','7618','7619','7613','7612',
-    # '7422','744','7492','751','752','757','7622','763',
-    # '765','766','767','772','773','7741','7742','776',
-    # '778','7612','7613','7615','7617'
-# ]
+# asset = 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/Classifier/ClassVP'
+# asset = 'projects/mapbiomas-workspace/AMOSTRAS/col8/CAATINGA/mosaics-CAATINGA-4'
+# asset = 'projects/mapbiomas-workspace/AMOSTRAS/col7/CAATINGA/classAfloramento'
+# asset = 'projects/mapbiomas-workspace/AMOSTRAS/col8/CAATINGA/aggrements'
+asset = 'projects/mapbiomas-workspace/AMOSTRAS/col8/CAATINGA/estabilidade_colecoes'
+lsBacias = [
+    '7754', '7691', '7581', '7625', '7584', '751', '7614', 
+    '752', '7616', '745', '7424', '773', '7612', '7613', 
+    '7618', '7561', '755', '7617', '7564', '761111','761112', 
+    '7741', '7422', '76116', '7761', '7671', '7615', '7411', 
+    '7764', '757', '771', '7712', '766', '7746', '753', '764', 
+    '7541', '7721', '772', '7619', '7443', '765', '7544', '7438', 
+    '763', '7591', '7592', '7622', '746'
+]
 
-
-lsBacias = ['7721', '761111']
-imgCol = (ee.ImageCollection(asset)
-                # .filter(ee.Filter.eq('version', 4)) 
-                # .filter(ee.Filter.eq('janela', 4))
-                # .filter(ee.Filter.inList('bacia', lsBacias))
-)
-lst_id = imgCol.reduceColumns(ee.Reducer.toList(), ['system:index']).get('list').getInfo()
-print(imgCol.aggregate_histogram('name_country').getInfo())
-for cc, idss in enumerate(lst_id):    
-    # id_bacia = idss.split("_")[2]
-    path_ = str(asset + '/' + idss)    
-    print ("... eliminando ❌ ... item 📍{} : {}  ▶️ ".format(cc, idss))    
-    try:
-        # ee.data.deleteAsset(path_)
-        print(path_)
-    except:
-        print(" NAO EXISTE!")
+eliminar_files = True
+Get_Remove_Array_from_ImgCol(asset,  play_eliminar= eliminar_files)  
