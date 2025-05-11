@@ -36,7 +36,7 @@ def Get_Remove_Array_from_ImgCol(asset_imgcol, fVers= False, vers= 1, fJanela= F
     
     for cc, idss in enumerate(lst_id):    
         path_ = str(asset_imgcol + '/' + idss)    
-        print (f"... eliminando ❌ ... item 📍{cc}/{len(lst_id)} : {idss}  ▶️ ")    
+        print (f"... eliminando ❌ ... item 📍{cc + 1}/{len(lst_id)} : {idss}  ▶️ ")    
         try:
             if play_eliminar:
                 ee.data.deleteAsset(path_)
@@ -62,7 +62,16 @@ def Get_Remove_Array_from_ImgCol(asset_imgcol, fVers= False, vers= 1, fJanela= F
 # asset = 'projects/mapbiomas-workspace/AMOSTRAS/col8/CAATINGA/mosaics-CAATINGA-4'
 # asset = 'projects/mapbiomas-workspace/AMOSTRAS/col7/CAATINGA/classAfloramento'
 # asset = 'projects/mapbiomas-workspace/AMOSTRAS/col8/CAATINGA/aggrements'
-asset = 'projects/mapbiomas-workspace/AMOSTRAS/col8/CAATINGA/estabilidade_colecoes'
+# asset = 'projects/mapbiomas-workspace/AMOSTRAS/col8/CAATINGA/estabilidade_colecoes'
+# asset = 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/Classifier/Classify_fromMMBV2YY'
+# asset = 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/Classifier/ClassifyV2YY'
+# asset = 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/Classifier/ClassifyV2Y'
+# asset = 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/Classifier/ClassifyVA'
+asset = 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/POS-CLASS/Gap-fill'
+# asset = 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/POS-CLASS/Spatial'
+# asset = 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/POS-CLASS/Temporal'
+# asset = 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/Classifier/ClassifyV2YY'
+# asset = 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/Classifier/ClassifyV1'
 lsBacias = [
     '7754', '7691', '7581', '7625', '7584', '751', '7614', 
     '752', '7616', '745', '7424', '773', '7612', '7613', 

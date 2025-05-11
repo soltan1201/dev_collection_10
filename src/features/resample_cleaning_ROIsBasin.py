@@ -60,6 +60,7 @@ class make_resampling_cleaning(object):
         'agropecuaria': [15,18,21],
         'outros': [22,25,33,29]
     } # 
+
     dictQtLimit = {
         '3': 5000,
         '4': 10000,
@@ -73,12 +74,12 @@ class make_resampling_cleaning(object):
         '33': 2000
     }
 
-    def __init__(self, path_Input, nbasin, lstProcFails):
+    def __init__(self, path_Input, prefixo, nbasin, lstProcFails):
         self.name_basin = nbasin
         print(f"=======  we will process FeatureCollecton << {self.name_basin} << in asset ========= \n >>>>>>> ", path_Input)   
         self.processar = False 
         self.lstProcFails = lstProcFails
-        self.asset_featc = os.path.join(path_Input, f'rois_fromGrade_{nbasin}')
+        self.asset_featc = os.path.join(path_Input, f'{prefixo}_{nbasin}')
         self.dir_featSel = os.path.join(pathparent, 'dados', 'feature_select_col10')
         self.make_dict_featSelect() 
         # self.dictProcFails = dictProcFails
@@ -140,12 +141,12 @@ class make_resampling_cleaning(object):
         print("salvando ... " + nameB + "..!")    
 
 
-    def load_features_ROIs(self, make_complex):
+    def load_features_ROIs(self, make_complex, deletar_asset= False):
         
         pmtros_GTB= {
             'numberOfTrees': int(self.max_leaf_node), 
             'shrinkage': float(self.rate_learn),         
-            'samplingRate': 0.8, 
+            'samplingRate': 0.45, 
             'loss': "LeastSquares",#'Huber',#'LeastAbsoluteDeviation', 
             'seed': int(0)
         }
@@ -157,6 +158,9 @@ class make_resampling_cleaning(object):
         # das featureCollections das ROIs      
         for idAssetOut in self.lstProcFails:
             nyear =  int(idAssetOut.split('/')[-1].split("_")[1])
+            if deletar_asset:
+                print(" deletando .... ", idAssetOut)
+                ee.data.deleteAsset(idAssetOut)
             if make_complex:                               
                 fcYY = fc_tmp.filter(ee.Filter.eq('year', int(nyear)))
                 # print(f"we load {fcYY.size().getInfo()} samples ")
@@ -172,6 +176,7 @@ class make_resampling_cleaning(object):
                     fcYYtipo = fcYY.filter(ee.Filter.inList('class', self.dictGroup[tipo]))
                     if tipo in ['vegetation', 'agropecuaria']:                             
                         dict_Class = ee.Dictionary(fcYYtipo.aggregate_histogram('class')).getInfo()
+                        print('processing > ', self.dictGroup[tipo])
                         for nclass in list(dict_Class.keys()):
                             print("filter by class == ", nclass)
                             fcYYbyClass = fcYYtipo.remap(self.dictRemap[str(nclass)][0], self.dictRemap[str(nclass)][1], 'class') 
@@ -185,7 +190,7 @@ class make_resampling_cleaning(object):
                             # print("first feat classif ", classROIsGTB.size().getInfo())
                             
                             step = 5
-                            for ii in range(70, 100, 5):
+                            for ii in range(20, 100, 10):
                                 frac_inic = ii/100
                                 frac_end = (ii + step)/100 
                                 classROIsGTBf = (classROIsGTB.filter(
@@ -208,23 +213,29 @@ class make_resampling_cleaning(object):
                     else:
                         print('processing > ', self.dictGroup[tipo])
                         feaReSamples = feaReSamples.merge(fcYYtipo)
+
+                
                 
                 self.processoExportar(feaReSamples, idAssetOut ) # f'{self.name_basin}_{nyear}_cd'
             else:
                 # if nyear in self.dictProcFails[self.name_basin]:
                 fcYY = fc_tmp.filter(ee.Filter.eq('year', nyear))
+                print("histograma de classe ", fcYY.aggregate_histogram('class').getInfo())
                 feaReSamples = ee.FeatureCollection([]) 
+                classROIsSel = None
                 for nclass in [4, 15, 21]:
                     print("filter by class == ", nclass)
                     classROIs = fcYY.filter(ee.Filter.eq('class', nclass))
-                    sizeFilt = classROIs.size()# .getInfo()
-                    num_limite = ee.Number(self.dictQtLimit[str(nclass)]).divide(ee.Number(sizeFilt))
-                    classROIsSel = self.downsamplesFC(classROIs, num_limite)
-                    feaReSamples = feaReSamples.merge(ee.FeatureCollection(classROIsSel))
+                    sizeFilt = classROIs.size().getInfo()
+                    if sizeFilt > 5:
+                        num_limite = ee.Number(self.dictQtLimit[str(nclass)]).divide(ee.Number(sizeFilt))
+                        classROIsSel = self.downsamplesFC(classROIs, num_limite)
+                        feaReSamples = feaReSamples.merge(ee.FeatureCollection(classROIsSel))
 
-                classROIsSel = fcYY.filter(ee.Filter.inList('class', [4, 15, 21]).Not())
+                outros =  [3,12,18,22,29,33]
+                classROIsSel = fcYY.filter(ee.Filter.inList('class', outros))
                 feaReSamples = feaReSamples.merge(ee.FeatureCollection(classROIsSel))              
-
+                feaReSamples = feaReSamples.map(lambda feat: feat.set('class', ee.Number.parse(feat.get('class')).toFloat()))
                 self.processoExportar(feaReSamples, idAssetOut)
 
         # else:
@@ -308,13 +319,38 @@ def get_dict_ROIs_fails(lstIdAssets):
 
     return dict_basinYYfails
 
+def make_dict_ROIs_byClass(lstIdAssets):
+    dictSamplesErrors = {}
+    for id_asset in lstIdAssets:
+        print(f'processing >> {id_asset}')
+        feat_tmp = ee.FeatureCollection(id_asset)
+        partes = id_asset.split("/")[-1].split("_")
+        nbacia = partes[0]
+        nyear = partes[1]
+        dict_class = feat_tmp.aggregate_histogram('class').getInfo()
+        print(f"samples from {nbacia} >> {nyear} :   {dict_class}")
+        lstCClass = []
+        amostras_float = True
+        try:
+            lstCClass =[int(cclas) for cclas in  list(dict_class.keys())]
+            amostras_float = False
+        except:
+            lstCClass =[int(float(cclas)) for cclas in  list(dict_class.keys())]
+
+        if 4 not in lstCClass or 15 not in lstCClass:
+            dictSamplesErrors[f"{nbacia}_{nyear}"] = id_asset
+        if not amostras_float:
+            dictSamplesErrors[f"{nbacia}_{nyear}"] = id_asset
+
+    return dictSamplesErrors
+
 
 #================================= teste feito no code editor ========
 # https://code.earthengine.google.com/c419b4781c6469fcedd46449245cbd40
 
 param = {
-    "asset_folder": {"id": "projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_merged_IndAllv4C"},
-    "asset_output": "projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_cleaned_MB_V4C",
+    "asset_folder": {"id": "projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_merged_IndAllv3C"},
+    "asset_output": "projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_cleaned_downsamplesv4C",
     'numeroTask': 6,
     'numeroLimit': 50,
     'conta' : {
@@ -370,29 +406,85 @@ print(f" we loaded {len(lista_assets)} asset from folder < {param['asset_folder'
 #     print(cc,kkey, lstV)
 #     cc += 1
 # sys.exit()
-
+lstBaciaSaveFail = True
+makedictErro = False
 lista_assetsF = GetPolygonsfromFolder({'id':param['asset_output']})
 print(f" we loaded {len(lista_assetsF)} assets ROIs cleanes from folder < {param['asset_output'].split('/')[-1]} >")
-print(lista_assetsF[:3])
+print(lista_assetsF[0])
 # sys.exit()
-dictFailsProcs = get_dict_ROIs_fails(lista_assetsF)
-cc = 0
-for kkey, lstV in dictFailsProcs.items():
-    print(f"#{cc} {kkey} with {len(lstV)} assets faltantes ", lstV[-1])
-    cc += 1
+if lstBaciaSaveFail:
+    dictFailsProcs = get_dict_ROIs_fails(lista_assetsF)
+    cc = 0
+    for kkey, id_asset in dictFailsProcs.items():
+        print(f"#{cc} {kkey} with {len(id_asset)} assets faltantes ")
+        print(id_asset[0])
+        cc += 1
+else:
+    if makedictErro:
+        dictFailsProcs = make_dict_ROIs_byClass(lista_assetsF)
+        with open('dict_basin_year_ROIs_byClass.json', 'w') as arquivo_json:
+            json.dump(dictFailsProcs, arquivo_json, indent=4)
+        print("dictionary saved as dict_basin_year_ROIs_byClass.json")
+        cc = 0
+        for kkey, id_asset in dictFailsProcs.items():
+            print(f"#{cc} {kkey} with {id_asset} assets faltantes ")
+            cc += 1
+    else:
+        with open('dict_basin_year_ROIs_byClass.json', 'r') as arquivo_json:
+            dictFailsProcs = json.load(arquivo_json)
+        print("dictionary readed as dict_basin_year_ROIs_byClass.json")
+
+
 # sys.exit()
-acount = gerenciador(50)
-cc = 0
-for nameBacia, id_assets in dictFailsProcs.items():     
-    print(id_assets[0])   
-    print(f"#{cc}  >>> {nameBacia}  >> {len(id_assets)}")
+acount = gerenciador(1)
+
+if lstBaciaSaveFail:
+    cc = 0
+    for nameBacia, id_assets in dictFailsProcs.items():     
+        print(id_assets[0])   
+        print(f"#{cc}  >>> {nameBacia}  >> {len(id_assets)}")
+        # sys.exit()
+        if cc > -1 : 
+            resampled_cleaned = make_resampling_cleaning(param["asset_folder"]["id"], "rois_grade", nameBacia, id_assets)
+            # processar = resampled_cleaned.processar
+            # if processar:
+            metodo_complexo = True
+            resampled_cleaned.load_features_ROIs(metodo_complexo)
+        cc += 1
+        # acount = gerenciador(acount)
+
+else:
+    cc = 0
+    newDictProc = {}
+    for kkey, id_asset in dictFailsProcs.items():
+        print(f"#{cc} {kkey} with {id_asset.replace('projects/earthengine-legacy/assets/' + param['asset_output'], '')} assets faltantes ")
+        if cc > -1 : 
+            nameBacia = id_asset.split('/')[-1].split("_")[0]
+            if nameBacia ==  '':  # 7712
+                feat_tmp = ee.FeatureCollection(id_asset)
+                dict_class = feat_tmp.aggregate_histogram('class').getInfo()
+                print(f"samples from {nameBacia}  :   {dict_class}")
+
+            lstNbacias = list(newDictProc.keys())
+            if nameBacia in lstNbacias:
+                lst_tmp = newDictProc[nameBacia]
+                lst_tmp.append(id_asset) 
+                newDictProc[nameBacia] = lst_tmp
+            else:
+                newDictProc[nameBacia] = [id_asset]
+
+        cc += 1
+
+    # print(newDictProc)
     # sys.exit()
-    if cc > 1 : 
-        resampled_cleaned = make_resampling_cleaning(param["asset_folder"]["id"], nameBacia, id_assets)
-        # processar = resampled_cleaned.processar
-        # if processar:
-        metodo_complexo = False
-        resampled_cleaned.load_features_ROIs(metodo_complexo)
-    cc += 1
-    # acount = gerenciador(acount)
+    # processando por Bacias 
     
+    cc = 0
+    for nameBacia, id_assets in newDictProc.items(): 
+        print(f"#{cc}  >>> {nameBacia}  >> {len(id_assets)}")
+        if cc > -1 : 
+            resampled_cleaned = make_resampling_cleaning(param["asset_folder"]["id"], "rois_grade", nameBacia, id_assets)
+            metodo_complexo = False
+            resampled_cleaned.load_features_ROIs(metodo_complexo, True)
+
+        cc += 1

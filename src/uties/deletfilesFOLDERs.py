@@ -20,25 +20,39 @@ except:
     print("Unexpected error:", sys.exc_info()[0])
     raise
 
-def GetPolygonsfromFolder(assetFolder, sufixo, play_eliminar):
-  
+def GetPolygonsfromFolder(assetFolder, sufixo, lstBacias= [], lstYear= [], play_eliminar= False):
     getlistPtos = ee.data.getList(assetFolder)
-    lstBacias = []
+    lst_path = []
     sizeFiles = len(getlistPtos)
+
     for cc, idAsset in enumerate(getlistPtos): 
         path_ = idAsset.get('id') 
-        lsFile =  path_.split("/")
-        name = lsFile[-1]
+        name =  path_.split("/")[-1]
         idBacia = name.split('_')[0]
-        if idBacia not in lstBacias:
-            lstBacias.append(idBacia)
+        nyear = int(name.split('_')[1])
+        
+        if len(lstBacias) > 0 and len(lstYear) > 0:            
+            if idBacia in lstBacias and nyear in lstYear:
+                print(" --- passo nas condicionais --- ")
+                print(f' {idBacia}    {nyear}    {name}'   )
+                # print(path_)
+                lst_path.append(path_)
+        else:
+            if sufixo in str(name): 
+                lst_path.append(path_)        
+     
         # print(name)
         # if str(name).startswith(sufixo): AMOSTRAS/col7/CAATINGA/classificationV
-        if sufixo in str(name): 
-            print("eliminando {}/{}:  {}".format(cc, sizeFiles,name))
-            print(path_)
-            if play_eliminar:
-                ee.data.deleteAsset(path_) 
+    cc = 0
+    sizeFiles = len(lst_path)
+    for npath in lst_path:
+        name = npath.split("/")[-1]
+        print(f"eliminando {cc}/{sizeFiles}:  {name}")
+        print(path_)
+        if play_eliminar:
+            ee.data.deleteAsset(npath) 
+
+        cc += 1
     
     print(lstBacias)
 
@@ -79,9 +93,10 @@ def GetPolygonsfromFolder(assetFolder, sufixo, play_eliminar):
 # asset = {'id': "projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/ROIs/roisGradesgroupedBuf"}
 # asset = {'id': "projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/ROIs/roisJoinedBaGrNN"}
 # asset = {'id': "projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/ROIs/roisJoinsbyBaciaNN"}
-asset = {'id': "projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/ROIs/roisredDJoinsbyBaciaNN"}
-
-
+# asset = {'id': "projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/ROIs/roisredDJoinsbyBaciaNN"}
+asset = {'id': "projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_cleaned_downsamplesv4C"}
+lstbacias = ['763']  # 7764
+lst_years = [1991, 1999, 2005, 2014, 2021, 2022, 2023]
 eliminar_files = False
-GetPolygonsfromFolder(asset, '', eliminar_files)  # 
+GetPolygonsfromFolder(asset, '', lstBacias= lstbacias, lstYear= lst_years, play_eliminar= eliminar_files)  # 
 

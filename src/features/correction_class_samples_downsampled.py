@@ -41,9 +41,11 @@ except:
 
 param = {     
     'assetOut': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_cleaned_DS_v4corrCC',
+    'assetOutMB': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_cleaned_MB_DS_v4corrCC',
     'asset_joinsGrBa': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_cleaned_downsamplesv4C',    
     'asset_joinsGrBaMB': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_cleaned_MB_V4C',
     'outAssetROIsred': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_cleaned_DS_v4CC', 
+    'outAssetROIsredMB': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_cleaned_MB_DS_v4CC', 
     'yearInicial': 1985,
     'yearFinal': 2024,
 }
@@ -53,7 +55,7 @@ nameBacias = [
     '752', '7616', '745', '7424', '773', '7612', '7613', 
     '7618', '7561', '755', '7617', '7564', '761111','761112', 
     '7741', '7422', '76116', '7761', '7671', '7615', '7411', 
-    '7764', '757', '771', '7712', '766', '7746', '753', '764', 
+    '7764', '757', '771', '7712',  '766', '7746', '753', '764', 
     '7541', '7721', '772', '7619', '7443', '765', '7544', '7438', 
     '763', '7591', '7592', '7622', '746'
 ]
@@ -70,32 +72,41 @@ def processoExportar(ROIsFeat, IdAssetnameB):
     task.start() 
     print("salvando ... " + nameB + "..!")    
 
+def sendFilenewAsset(idSource, idTarget):
+    # moving file from repository Arida to Nextgenmap
+    ee.data.renameAsset(idSource, idTarget)
 
-print("vai exportar em ", param['assetOut'])
+print("vai exportar em ", param['assetOutMB'])
 listYears = [k for k in range(param['yearInicial'], param['yearFinal'] + 1)]
 
-for _nbacia in nameBacias[:]:
-
+for _nbacia in nameBacias[6:]:
     for cc, nyear in enumerate(listYears[:]): 
         nameFeatROIs =  f"{_nbacia}_{nyear}_cd" 
 
-        ROIs_DScc = ee.FeatureCollection( os.path.join(param['asset_joinsGrBa'], nameFeatROIs)) 
-        ROIs_RedCC = ee.FeatureCollection( os.path.join(param['outAssetROIsred'], nameFeatROIs)) 
+        ROIs_DScc = ee.FeatureCollection( os.path.join(param['asset_joinsGrBaMB'], nameFeatROIs)) 
+        ROIs_RedCC = ee.FeatureCollection( os.path.join(param['outAssetROIsredMB'], nameFeatROIs)) 
 
         dictDScc = ROIs_DScc.aggregate_histogram('class').getInfo()
         dictRedcc = ROIs_RedCC.aggregate_histogram('class').getInfo()
 
-        lstCCds = list(dictDScc.keys())
-        lstCCred = list(dictRedcc.keys())
+        lstCCds = [int(float(ccs)) for ccs in list(dictDScc.keys())]
+        lstCCred = [int(float(ccs)) for ccs in list(dictRedcc.keys())]
+        print(f"lista all {lstCCds}  \n  >>>> {lstCCred}")
         lstCCfails = [cc for cc in lstCCds if cc not in lstCCred]
-        print("lista de classes faltantes ")
-
+        print("lista de classes faltantes ", lstCCfails)
+        idAssetOut = os.path.join(param['assetOutMB'], nameFeatROIs)
+        
         if len(lstCCfails) > 0:
             featCCfails = ROIs_DScc.filter(ee.Filter.inList('class', lstCCfails))
-            ROIs_RedCC = ROIs_RedCC.merge(featCCfails)
-            idAssetOut = os.path.join(param['assetOut'], nameFeatROIs)
+            ROIs_RedCC = ROIs_RedCC.merge(featCCfails)            
             processoExportar(ROIs_RedCC, idAssetOut)
-
-
+            print("exportando para ", idAssetOut)
+        else:
+            source = os.path.join(param['outAssetROIsredMB'], nameFeatROIs)
+            try:
+                sendFilenewAsset(source, idAssetOut) 
+                print(cc, ' => move ', nameFeatROIs, f" to Folder in {idAssetOut}")
+            except:
+                print("errro ")
                             
             

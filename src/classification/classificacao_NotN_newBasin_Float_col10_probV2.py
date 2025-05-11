@@ -1255,7 +1255,7 @@ arqFeitos = open(path_MGRS, 'a+')
 
 # mpath_bndImp = pathFolder + '/dados/regJSON/'
 # filesJSON = glob.glob(pathJson + '*.json')
-# print("  files json ", filesJSON)
+# print("  files json ", filesJSON)param
 # nameDictGradeBacia = ''
 # sys.exit()
 

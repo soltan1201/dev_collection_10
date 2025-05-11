@@ -41,8 +41,8 @@ param = {
     'asset_bacias': "projects/mapbiomas-arida/ALERTAS/auxiliar/bacias_hidrografica_caatinga49div",
     'asset_bacias_buffer' : 'projects/ee-solkancengine17/assets/shape/bacias_buffer_caatinga_49_regions',
     'asset_IBGE': 'users/SEEGMapBiomas/bioma_1milhao_uf2015_250mil_IBGE_geo_v4_revisao_pampa_lagoas',
-    # 'assetOutMB': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/Classifier/Classify_fromMMBV2',
     'assetOut': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_cleaned_DS_v4CC',
+    'assetOutMB': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_cleaned_MB_DS_v4CC',
     'asset_joinsGrBa': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_cleaned_downsamplesv4C',    
     'asset_joinsGrBaMB': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/ROIs_cleaned_MB_V4C',
     'outAssetROIs': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/ROIs/roisJoinedBaGrNN', 
@@ -127,20 +127,21 @@ pmtros_GTB= {
 }
 
 nameBacias = [
-    '7754', '7691', '7581', '7625', '7584', '751', '7614', 
-    '752', '7616', '745', '7424', '773', '7612', '7613', 
-    '7618', '7561', '755', '7617', '7564', '761111','761112', 
-    '7741', '7422', '76116', '7761', '7671', '7615', '7411', 
-    '7764', '757', '771', '7712', '766', '7746', '753', '764', 
+    # '7754', '7691', '7581', '7625', '7584', '751', '7614', 
+    # '752', '7616', '745', '7424', '773', '7612', '7613', 
+    # '7618', '7561', '755', '7617', '7564', '761111','761112', 
+    # '7741', '7422',
+    '76116', '7761', '7671', '7615', '7411', 
+    # '7764', '757', '771', '7712', '766', '7746', '753', '764', 
     '7541', '7721', '772', '7619', '7443', '765', '7544', '7438', 
     '763', '7591', '7592', '7622', '746'
 ]
 nameBaciasLST = ['7541', '7544', '7592', '7612', '7615',  '7712', '7721', '7741', '7746']
 lst_bacias_proc = [item for item in nameBacias if item not in nameBaciasLST]
 
-asset_rois = param['asset_joinsGrBa']
+asset_rois = param['asset_joinsGrBaMB']
 tesauroBasin = arqParams.tesauroBasin
-for _nbacia in lst_bacias_proc[30:30]:
+for _nbacia in nameBacias[0:2]:
     path_ptrosFS = os.path.join(pathFSJson, f"feat_sel_{_nbacia}.json")
     print("load features json ", path_ptrosFS)
 
@@ -168,7 +169,7 @@ for _nbacia in lst_bacias_proc[30:30]:
         print(f" numero de bandas selecionadas {len(bandas_imports)} ") 
 
         try:
-            ROIs_toTrain = ee.FeatureCollection( os.path.join(param['assetOut'], nameFeatROIs))
+            ROIs_toTrain = ee.FeatureCollection( os.path.join(param['assetOutMB'], nameFeatROIs))
             print('  >>>> ', ROIs_toTrain.aggregate_histogram('class').getInfo())        
         except:
             ROIs_toTrain = (
@@ -196,7 +197,6 @@ for _nbacia in lst_bacias_proc[30:30]:
                             # classificando para a classe de valor 1
                             classROIsGTB = (fcYYbyClass.filter(ee.Filter.eq('class', 1))
                                                 .classify(classifierGTB, 'label'))
-
                             step = 5
                             for ii in range(70, 100, 5):
                                 frac_inic = ii/100
@@ -224,10 +224,10 @@ for _nbacia in lst_bacias_proc[30:30]:
                 for nclass in [4, 15, 21]:
                     nclass =  int(float(nclass))                    
                     classROIs = ROIs_toTrain.filter(ee.Filter.eq('class', nclass))
-                    sizeFilt = classROIs.size().getInfo()
+                    sizeFilt = int(classROIs.size().getInfo())
                     # print(classROIs.propertyNames().getInfo())
                     print(f"filter by class == {nclass}  with {sizeFilt}" )
-                    if sizeFilt > 5:                        
+                    if int(sizeFilt) > 5:                        
                         num_limite = ee.Number(dictQtLimit[str(nclass)]).divide(ee.Number(sizeFilt))
                         classROIsSel = downsamplesFC(classROIs, num_limite)
                         # print(classROIsSel.propertyNames().getInfo())
@@ -241,5 +241,5 @@ for _nbacia in lst_bacias_proc[30:30]:
 
                     # self.processoExportar(feaReSamples, idAssetOut)
             
-            idAssetOut = os.path.join(param['assetOut'], nameFeatROIs)
+            idAssetOut = os.path.join(param['assetOutMB'], nameFeatROIs)
             processoExportar(feaReSamples, idAssetOut )
