@@ -117,7 +117,7 @@ class processo_filterFrequence(object):
                             'biome', 'CAATINGA',
                             'type_filter', 'frequence',
                             'from', 'Gap-fill',
-                            'collection', '9.0',
+                            'collection', '10.0',
                             'model', self.nmodel,
                             'step', self.step,
                             'id_bacia', self.id_bacias,

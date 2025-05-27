@@ -33,17 +33,17 @@ except:
     raise
 
 param = {      
-    'output_asset': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/POS-CLASS/Spatial',
-    # 'input_asset': 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/POS-CLASS/FrequencyV3',
-    'input_asset': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/POS-CLASS/Gap-fill',
-    # 'input_asset': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/POS-CLASS/Temporal',
+    'output_asset': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/POS-CLASS/Spatials',
+    'input_asset': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/POS-CLASS/Frequency',
+    # 'input_asset': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/POS-CLASS/Gap-fill',
+    # 'input_asset': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/POS-CLASS/TemporalA',
     'asset_bacias_buffer' : 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/bacias_hidrografica_caatinga_49_regions',            
     'last_year' : 2024,
     'first_year': 1985,
-    'janela': 3,
+    'janela': 5,
     'step': 1,
-    'versionOut' : 4,
-    'versionInp' : 4,
+    'versionOut' : 8,
+    'versionInp' : 8,
     'numeroTask': 6,
     'numeroLimit': 50,
     'conta' : {
@@ -60,10 +60,10 @@ param = {
 }
 lst_bands_years = ['classification_' + str(yy) for yy in range(param['first_year'], param['last_year'] + 1)]
 
-def buildingLayerconnectado(imgClasse):
+def buildingLayerconnectado(imgClasse, maxNumbPixels):
     lst_band_conn = ['classification_' + str(yy) + '_conn' for yy in range(param['first_year'], param['last_year'] + 1)]
     # / add connected pixels bands
-    maxNumbPixels = 10
+    # maxNumbPixels = 20
     bandaConectados = imgClasse.connectedPixelCount(
                                             maxSize= maxNumbPixels, 
                                             eightConnected= True
@@ -74,9 +74,9 @@ def buildingLayerconnectado(imgClasse):
 
 
 def apply_spatialFilterConn (name_bacia):
-    frequencyNat = False
+    # frequencyNat = False
     # no scripts do gapFill estava com 10
-    min_connect_pixel = 10
+    min_connect_pixel = 12
     geomBacia = (ee.FeatureCollection(param['asset_bacias_buffer'])
                     .filter(ee.Filter.eq('nunivotto4', name_bacia))
         )
@@ -84,75 +84,94 @@ def apply_spatialFilterConn (name_bacia):
     bacia_raster = geomBacia.reduceToImage(['id_codigo'], ee.Reducer.first()).gt(0)            
     geomBacia = geomBacia.geometry()
 
-    if 'Temporal' in param['input_asset']:
-        #filterTP_BACIA_7754_GTB_J3_V4
-        name_imgClass = f"filterTP_BACIA_{name_bacia}_GTB_J{param['janela']}_V{param['versionInp']}"
-    elif "Frequenc" in param['input_asset']:
-        name_imgClass = 'filterFQ_BACIA_'+ name_bacia + "_V" + str(param['versionInp'])
-    elif 'Gap-fill' in param['input_asset']:
-        # filterGF_BACIA_745_GTB_V30
-        pass
-    
-    if frequencyNat:
-        print("carregando frequency Natural ")
-        frecuencia = 'frequence'
-    else:
-        frecuencia = 'frequence_natUso'
-
     imgClass = (ee.ImageCollection(param['input_asset'])
-                        # .filter(ee.Filter.eq('version', param['versionInp']))
-                        .filter(ee.Filter.eq('id_bacia', name_bacia ))
+                        .filter(ee.Filter.eq('version', param['versionInp']))
+                        .filter(ee.Filter.eq('id_bacias', name_bacia ))
                 )
     print(" we load ", imgClass.size().getInfo())
     if "Temporal" in param['input_asset']:
-        imgClass = (imgClass.filter(ee.Filter.eq('step', 1))
-                            .filter(ee.Filter.eq('janela', 3)))
-    
+        imgClass = (imgClass
+                            # .filter(ee.Filter.eq('step', 1))
+                            .filter(ee.Filter.eq('janela', 8)))
+    print(" we load ", imgClass.size().getInfo())
     imgClass = imgClass.first().updateMask(bacia_raster)
     print('  show metedata imgClass', imgClass.get('system:index').getInfo())
+    
     # print(imgClass.aggregate_histogram('system:index').getInfo())
     # sys.exit()
     numBands = len(imgClass.bandNames().getInfo())
     print(' numero de bandas ', numBands)
     if numBands <= 49:
-        imgClass = buildingLayerconnectado(imgClass)
-    
+        imgClass = buildingLayerconnectado(imgClass, min_connect_pixel)
+    # sys.exit()
 
     class_output = ee.Image().byte()
 
     # https://code.earthengine.google.com/b24c36d4d749a00d619eee4d4cbdde58
     for cc, yband_name in enumerate(lst_bands_years[:]):
-        maskConn = imgClass.select(f'{yband_name}_conn').lt(min_connect_pixel).selfMask()
+        # print(" processing band >> ", yband_name)
+        maskConn = imgClass.select(f'{yband_name}_conn').lt(min_connect_pixel)#.selfMask()
+
+        #### -- Aplica o filtro da maioria --- ###
+        maskSavUso = imgClass.select(yband_name).eq(4).Or(imgClass.select(yband_name).eq(21))
+        # maskSavFlorest = imgClass.select(yband_name).eq(4).Or(imgClass.select(yband_name).eq(3))
+        maskUsoSolo = imgClass.select(yband_name).eq(21).Or(imgClass.select(yband_name).eq(22))
+
         ### // Define o tamanho da janela do filtro (3x3 neste caso)   ///
         ###  // var kernel = ee.Kernel.square(1); ### // Raio de 1 pixel (janela 3x3) //
-        kernel = ee.Kernel.square(2) ####// Raio de 2 pixels (janela 5x5)
-        # // Aplica o filtro da maioria colocando o valor da moda
-        filteredImage = (imgClass.select(yband_name)
+        kernel = ee.Kernel.square(4) ####// Raio de 2 pixels (janela 5x5)
+        # --- Imagem base original ---
+        base = imgClass.select(yband_name)
+        ####  a savana dentro dos pixels conectados será classe Uso   ####
+
+        filterImageSavUs = (imgClass.select(yband_name)
+                        .reduceNeighborhood(
+                            reducer= ee.Reducer.mode(),
+                            kernel= kernel
+                        ))
+        filterImageUsoSav = (imgClass.select(yband_name)
                                 .reduceNeighborhood(
-                                    reducer= ee.Reducer.mode(),
+                                    reducer= ee.Reducer.min(),
                                     kernel= kernel
-                                )
-                        )
-        # ficando com os pixels da moda 
-        filteredImage = filteredImage.updateMask(maskConn)
+                                ))
+
+        filterImageUsoSol = (imgClass.select(yband_name)
+                                .reduceNeighborhood(
+                                    reducer= ee.Reducer.min(),
+                                    kernel= kernel
+                                ))
+        filterImageSavUs = filterImageSavUs.updateMask(maskSavUso).updateMask(maskConn)
+        filterImageUsoSav = filterImageUsoSav.updateMask(maskSavUso).updateMask(maskConn)
+        # # filterImageSavFo = filterImageSavFo.updateMask(maskSavFlorest).updateMask(maskConn)
+        filterImageUsoSol = filterImageUsoSol.updateMask(maskUsoSolo).updateMask(maskConn)
+        # --- Aplicar suavização final sobre step2 ---
+        # step3 = step2.where(maskUsoSolo.And(maskConn), filterImageUsoSol)
+
         # moda_kernel = imgClass.select(yband_name).focal_mode(2 , 'square', 'pixels')
         # moda_kernel = moda_kernel.updateMask()
-        rasterMap = imgClass.select(yband_name).blend(filteredImage).rename(yband_name)
+        # --- Aplica máscara original para evitar buracos invisíveis ---
+        rasterMap = (base
+                        .blend(filterImageUsoSav)
+                        .blend(filterImageSavUs) # add
+                        .blend(filterImageUsoSol)
+                        .rename(yband_name))
+
         class_output = class_output.addBands(rasterMap)
+        # print(' comrpovando as bandas adicionadas \n', class_output.bandNames().getInfo())
     
-    nameExp = f"filterSP_BACIA_{name_bacia}_GTB_V{param['versionOut']}_step{param['step']}"
+    nameExp = f"filterSP_BACIA_{name_bacia}_GTB_V{param['versionOut']}"
     # class_output = class_output.set('version', param['versionSP'])
     class_output = (class_output.updateMask(bacia_raster)
                     .select(lst_bands_years)
                     .set(
                         'version', param['versionOut'], 'biome', 'CAATINGA',
-                        'collection', '10.0', 'id_bacia', name_bacia,
+                        'collection', '10.0', 'id_bacias', name_bacia,
                         'sensor', 'Landsat', 'source','geodatin', 
                         'model', 'GTB', 'step', param['step'], 
                         'system:footprint', geomBacia
                     ))
     processoExportar(class_output,  nameExp, geomBacia)
-
+    # sys.exit()
 #exporta a imagem classificada para o asset
 def processoExportar(mapaRF,  nomeDesc, geom_bacia):
     
@@ -173,10 +192,9 @@ def processoExportar(mapaRF,  nomeDesc, geom_bacia):
     for keys, vals in dict(task.status()).items():
         print ( "  {} : {}".format(keys, vals))
 
-
 relatorios = open("relatorioTaskXContas.txt", 'a+')
 #============================================================
-#========================METODOS=============================
+#======================= METODOS ============================
 #============================================================
 def gerenciador(cont):    
     #=====================================
@@ -214,15 +232,14 @@ def gerenciador(cont):
 
 listaNameBacias = [
     '7691', '7754', '7581', '7625', '7584', '751', '7614', 
-    '7616', '745', '7424', '773', '7612', '7613', 
+    '7616', '745', '7424', '773', '7612', '7613', '752', 
     '7618', '7561', '755', '7617', '7564', '761111','761112', 
     '7741', '7422', '76116', '7761', '7671', '7615', '7411', 
     '7764', '757', '771', '766', '7746', '753', '764', 
     '7541', '7721', '772', '7619', '7443','7544', '7438', 
-    '763', '7591', '7592', '746','7712', '7622', '765', 
-    #'752', 
+    '763', '7591', '7592', '746','7712', '7622', '765',     
 ]
-
+# listaNameBacias = ['7612']
 lstBacias = []
 changeAcount = False
 lstqFalta =  []
@@ -232,7 +249,7 @@ cont = 16
 input_asset = 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/POS-CLASS/Gap-fill'
 if changeAcount:
     cont = gerenciador(cont)
-version = 4
+version = 5
 modelo = 'GTB'
 listBacFalta = []
 knowMapSaved = False
@@ -257,8 +274,6 @@ for cc, idbacia in enumerate(listaNameBacias[:]):
             # cont = gerenciador(cont)            
             print("----- PROCESSING BACIA {} -------".format(idbacia))        
             apply_spatialFilterConn(idbacia)
-            
-
 
 if knowMapSaved:
     print("lista de bacias que faltam \n ",listBacFalta)

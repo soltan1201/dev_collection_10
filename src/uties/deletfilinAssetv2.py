@@ -19,17 +19,19 @@ except:
     print("Unexpected error:", sys.exc_info()[0])
     raise
 
-def Get_Remove_Array_from_ImgCol(asset_imgcol, fVers= False, vers= 1, fJanela= False, janele= 3, fList= False, lsBacias= [], play_eliminar= False):
+def Get_Remove_Array_from_ImgCol(asset_imgcol, vers= 0, janela= 0, lstBacias= [], lstyear= [], play_eliminar= False):
 
     
     imgCol = ee.ImageCollection(asset_imgcol)
     
-    if fVers:
+    if vers > 0:
         imgCol = imgCol.filter(ee.Filter.eq('version', vers))
-    if fJanela:
-        imgCol = imgCol.filter(ee.Filter.eq('janela', 4))    
-    if fList:
-        imgCol = imgCol.filter(ee.Filter.inList('bacia', lsBacias))
+    if janela > 0:
+        imgCol = imgCol.filter(ee.Filter.eq('janela', janela))    
+    if len(lstBacias) > 0:
+        imgCol = imgCol.filter(ee.Filter.inList('id_bacias', lstBacias))
+    if len(lstyear) > 0:
+        imgCol = imgCol.filter(ee.Filter.inList('year', lstyear))
     
     lst_id = imgCol.reduceColumns(ee.Reducer.toList(), ['system:index']).get('list').getInfo()
     print(f'we will eliminate {len(lst_id)} file image from {asset_imgcol} ')
@@ -45,35 +47,22 @@ def Get_Remove_Array_from_ImgCol(asset_imgcol, fVers= False, vers= 1, fJanela= F
             print(f" {path_} -- > NAO EXISTE!")
 
 
-# asset = 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/masks/maks_estaveis_v2'
-# asset = 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/masks/maks_coinciden'
-# asset = 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/masks/maks_fire_w5'
-# asset = 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/masks/mask_pixels_toSample'
-# asset = 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/S2/Classifier/ClassVY'
-# asset = 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/S2/POS-CLASS/toExport' #
-# asset = 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/S2/POS-CLASS/ilumination'
-# asset = 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/S2/POS-CLASS/grass_aflor'
-# asset = 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/S2/POS-CLASS/Temporal'
-# asset = 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/S2/POS-CLASS/Gap-fill'
-# asset = 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/S2/POS-CLASS/clean_water'
-# asset = 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/Validation/aggrements'
-# asset = 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/Classifier/ClassV1'
-# asset = 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/Classifier/ClassVP'
-# asset = 'projects/mapbiomas-workspace/AMOSTRAS/col8/CAATINGA/mosaics-CAATINGA-4'
-# asset = 'projects/mapbiomas-workspace/AMOSTRAS/col7/CAATINGA/classAfloramento'
-# asset = 'projects/mapbiomas-workspace/AMOSTRAS/col8/CAATINGA/aggrements'
-# asset = 'projects/mapbiomas-workspace/AMOSTRAS/col8/CAATINGA/estabilidade_colecoes'
 # asset = 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/Classifier/Classify_fromMMBV2YY'
 # asset = 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/Classifier/ClassifyV2YY'
 # asset = 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/Classifier/ClassifyV2Y'
 # asset = 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/Classifier/ClassifyVA'
-asset = 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/POS-CLASS/Gap-fill'
-# asset = 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/POS-CLASS/Spatial'
+# asset = 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/POS-CLASS/Gap-fill'
+# asset = 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/POS-CLASS/Spatials_all'
+# asset = 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/POS-CLASS/Spatials_int'
+# asset= 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/POS-CLASS/transitionTest'
+asset= 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/POS-CLASS/MergerV6'
 # asset = 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/POS-CLASS/Temporal'
-# asset = 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/Classifier/ClassifyV2YY'
+# asset = 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/POS-CLASS/TemporalCC'
+# asset = 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/POS-CLASS/Frequency'
+# asset = 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/Classifier/ClassifyV2YX'
 # asset = 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/Classifier/ClassifyV1'
 lsBacias = [
-    '7754', '7691', '7581', '7625', '7584', '751', '7614', 
+    '7754', '7691', '7581', '7625', '7584',  '7614', '751',
     '752', '7616', '745', '7424', '773', '7612', '7613', 
     '7618', '7561', '755', '7617', '7564', '761111','761112', 
     '7741', '7422', '76116', '7761', '7671', '7615', '7411', 
@@ -82,5 +71,6 @@ lsBacias = [
     '763', '7591', '7592', '7622', '746'
 ]
 
-eliminar_files = True
-Get_Remove_Array_from_ImgCol(asset,  play_eliminar= eliminar_files)  
+eliminar_files = False
+# lstyear=[2025], 
+Get_Remove_Array_from_ImgCol(asset, vers= 8, play_eliminar= eliminar_files)  

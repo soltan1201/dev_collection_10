@@ -69,7 +69,7 @@ class ClassMosaic_indexs_Spectral(object):
         'lsClasse': [4, 3, 12, 15, 18, 21, 22, 33],
         'lsPtos': [300, 500, 300, 350, 150, 100, 150, 300],
         "anoIntInit": 1985,
-        "anoIntFin": 2024,
+        "anoIntFin": 2025,
         'dict_classChangeBa': arqParams.dictClassRepre,
         # https://scikit-learn.org/stable/modules/ensemble.html#gradient-boosting
         'pmtGTB': {
@@ -945,13 +945,16 @@ class ClassMosaic_indexs_Spectral(object):
         # sys.exit()
         imglsClasxanos = ee.Image().byte()
 
-        for nyear in self.lst_year[:]:
+        for nyear in self.lst_year[-1:]:
             bandActiva = 'classification_' + str(nyear)        
             print( "banda activa: " + bandActiva)   
 
 
             # nameFeatROIs = 'rois_grade_' + _nbacia
-            nameFeatROIs =  f"{_nbacia}_{nyear}_cd"  
+            if nyear < 2025:
+                nameFeatROIs =  f"{_nbacia}_{nyear}_cd"  
+            else:
+                nameFeatROIs =  f"{_nbacia}_{2024}_cd"
             print("loading Rois JOINS = ", nameFeatROIs)
             asset_rois = self.options['asset_joinsGrBa']
             if not process_mosaic_EE:
@@ -967,45 +970,49 @@ class ClassMosaic_indexs_Spectral(object):
 
             # cria o mosaico a partir do mosaico total, cortando pelo poligono da bacia 
             date_inic = ee.Date.fromYMD(int(nyear),1,1)      
-            date_end = ee.Date.fromYMD(int(nyear),12,31)   
-            if process_mosaic_EE:
-                # de mosaico EE y para mosaico Mapbiomas (X)
-                lstCoef = [0.8425, 0.8957, 0.9097, 0.3188, 0.969, 0.9578]
-                bandsCoef = ee.Image.constant(lstCoef + lstCoef + lstCoef)
-                lstIntercept = [106.7546, 115.1553, 239.0688, 1496.4408, 392.3453, 366.57]
-                bandsIntercept = ee.Image.constant(lstIntercept + lstIntercept + lstIntercept)
+            date_end = ee.Date.fromYMD(int(nyear),12,31)  
+            if nyear < 2025: 
+                if process_mosaic_EE:
+                    # de mosaico EE y para mosaico Mapbiomas (X)
+                    lstCoef = [0.8425, 0.8957, 0.9097, 0.3188, 0.969, 0.9578]
+                    bandsCoef = ee.Image.constant(lstCoef + lstCoef + lstCoef)
+                    lstIntercept = [106.7546, 115.1553, 239.0688, 1496.4408, 392.3453, 366.57]
+                    bandsIntercept = ee.Image.constant(lstIntercept + lstIntercept + lstIntercept)
 
-                colmosaicMapbiomas = imagens_mosaico.filter(ee.Filter.eq('year', nyear)).median()
-                imagens_mosaicoEEv = colmosaicMapbiomas.multiply(bandsCoef).add(bandsIntercept) 
-                imagens_mosaicoEEv = imagens_mosaicoEEv.divide(10000)#.rename(param.bnd_L)
-                # print(f" we have {imagens_mosaicoEEv.bandNames().getInfo()} images ")
-            
-                #cria o mosaico a partir do mosaico total, cortando pelo poligono da bacia    
+                    colmosaicMapbiomas = imagens_mosaico.filter(ee.Filter.eq('year', nyear)).median()
+                    imagens_mosaicoEEv = colmosaicMapbiomas.multiply(bandsCoef).add(bandsIntercept) 
+                    imagens_mosaicoEEv = imagens_mosaicoEEv.divide(10000)#.rename(param.bnd_L)
+                    # print(f" we have {imagens_mosaicoEEv.bandNames().getInfo()} images ")
+                
+                    #cria o mosaico a partir do mosaico total, cortando pelo poligono da bacia    
+                    mosaicColGoogle = imagens_mosaicoEE.filter(ee.Filter.date(date_inic, date_end))        
+                    mosaicoBuilded = self.make_mosaicofromIntervalo(mosaicColGoogle, nyear) 
+                    # print(f" we have {mosaicoBuilded.bandNames().getInfo()} images do mosaico mensal do google ")
+                    maskGaps = mosaicoBuilded.unmask(-1000).eq(-1000)
+                    ## preenchendo o gap do mosaico do EE pelo mosaico dao mapbiomas
+                    mosaicoBuilded = mosaicoBuilded.unmask(0).where(maskGaps, imagens_mosaicoEEv)
+                    # print(f" we have {mosaicoBuilded.bandNames().getInfo()} images ")
+                else:                
+                    # de mosaico Mapbiomas para mosaico EE (X)
+                    lstCoef = [6499.0873, 8320.9741, 7243.8252, 5944.0973, 7494.4502, 7075.1618]
+                    bandsCoef = ee.Image.constant(lstCoef + lstCoef + lstCoef)
+                    lstIntercept = [64.0821, 55.127, 36.7782, 1417.7931, 325.8045, 141.9352]
+                    bandsIntercept = ee.Image.constant(lstIntercept + lstIntercept + lstIntercept)             
+
+                    #cria o mosaico a partir do mosaico total, cortando pelo poligono da bacia    
+                    mosaicColGoogle = imagens_mosaicoEE.filter(ee.Filter.date(date_inic, date_end))        
+                    mosaicoGoogle = self.make_mosaicofromIntervalo(mosaicColGoogle, nyear) 
+                    imagens_mosaicoEEv = mosaicoGoogle.multiply(bandsCoef).add(bandsIntercept)
+                    
+                    colmosaicMapbiomas = imagens_mosaico.filter(ee.Filter.eq('year', nyear)).median()
+                    maskGaps = colmosaicMapbiomas.unmask(-1000).eq(-1000)
+                    ## preenchendo o gap do mosaico do EE pelo mosaico dao mapbiomas
+                    ## preenchendo o gap do mosaico do EE pelo mosaico dao mapbiomas
+                    mosaicoBuilded = colmosaicMapbiomas.unmask(0).where(maskGaps, imagens_mosaicoEEv)
+                    # print(f" we have {mosaicoBuilded.bandNames().getInfo()} images ")
+            else:
                 mosaicColGoogle = imagens_mosaicoEE.filter(ee.Filter.date(date_inic, date_end))        
                 mosaicoBuilded = self.make_mosaicofromIntervalo(mosaicColGoogle, nyear) 
-                # print(f" we have {mosaicoBuilded.bandNames().getInfo()} images do mosaico mensal do google ")
-                maskGaps = mosaicoBuilded.unmask(-1000).eq(-1000)
-                ## preenchendo o gap do mosaico do EE pelo mosaico dao mapbiomas
-                mosaicoBuilded = mosaicoBuilded.unmask(0).where(maskGaps, imagens_mosaicoEEv)
-                # print(f" we have {mosaicoBuilded.bandNames().getInfo()} images ")
-            else:                
-                # de mosaico Mapbiomas para mosaico EE (X)
-                lstCoef = [6499.0873, 8320.9741, 7243.8252, 5944.0973, 7494.4502, 7075.1618]
-                bandsCoef = ee.Image.constant(lstCoef + lstCoef + lstCoef)
-                lstIntercept = [64.0821, 55.127, 36.7782, 1417.7931, 325.8045, 141.9352]
-                bandsIntercept = ee.Image.constant(lstIntercept + lstIntercept + lstIntercept)             
-
-                #cria o mosaico a partir do mosaico total, cortando pelo poligono da bacia    
-                mosaicColGoogle = imagens_mosaicoEE.filter(ee.Filter.date(date_inic, date_end))        
-                mosaicoGoogle = self.make_mosaicofromIntervalo(mosaicColGoogle, nyear) 
-                imagens_mosaicoEEv = mosaicoGoogle.multiply(bandsCoef).add(bandsIntercept)
-                
-                colmosaicMapbiomas = imagens_mosaico.filter(ee.Filter.eq('year', nyear)).median()
-                maskGaps = colmosaicMapbiomas.unmask(-1000).eq(-1000)
-                ## preenchendo o gap do mosaico do EE pelo mosaico dao mapbiomas
-                ## preenchendo o gap do mosaico do EE pelo mosaico dao mapbiomas
-                mosaicoBuilded = colmosaicMapbiomas.unmask(0).where(maskGaps, imagens_mosaicoEEv)
-                # print(f" we have {mosaicoBuilded.bandNames().getInfo()} images ")
 
             print("----- calculado todos os 102 indices ---------------------")
             mosaicProcess = self.CalculateIndice(mosaicoBuilded.updateMask(bacia_raster))
@@ -1016,8 +1023,11 @@ class ClassMosaic_indexs_Spectral(object):
             #cria o classificador com as especificacoes definidas acima 
             limitlsb = 45
             # print( bandas_fromFS[f"{_nbacia}_{nyear}"])
+            if nyear < 2025:
+                lstbandas_import = bandas_fromFS[f"{_nbacia}_{nyear}"]['features']
+            else:
+                lstbandas_import = bandas_fromFS[f"{_nbacia}_{2024}"]['features']
             
-            lstbandas_import = bandas_fromFS[f"{_nbacia}_{nyear}"]['features']
             bandas_imports = [bnd for bnd in lstbandas_import if 'stdDev' not in bnd]
             if 'solpe' in bandas_imports:
                 bandas_imports.remove('solpe')
@@ -1085,7 +1095,7 @@ class ClassMosaic_indexs_Spectral(object):
         imglsClasxanos = imglsClasxanos.set("system:footprint", baciabuffer.coordinates())
         # exporta bacia   .coordinates()
         self.processoExportar(imglsClasxanos, baciabuffer, nomec, process_mosaic_EE) 
-                
+        sys.exit()        
     
     # salva ftcol para um assetindexIni
     # lstKeysFolder = ['cROIsN2manualNN', 'cROIsN2clusterNN'] 
@@ -1346,7 +1356,7 @@ print(lst_bacias_proc)
 cont = 40
 # cont = gerenciador(cont)
 # sys.exit(0)
-for _nbacia in bacias_prioritarias[:]:
+for _nbacia in nameBacias[:]:
     if knowMapSaved:
         try:
             nameMap = 'BACIA_' + _nbacia + '_' + 'GTB_col10-v' + str(param['version'])

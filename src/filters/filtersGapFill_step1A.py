@@ -55,14 +55,14 @@ class processo_gapfill(object):
         self.bacia_raster =  self.geom_bacia.reduceToImage(['id_codigo'], ee.Reducer.first()).gt(0)                                                    
         self.geom_bacia = self.geom_bacia.geometry()   
         # print("geometria ", len(self.geom_bacia.getInfo()['coordinates']))
-        self.lstbandNames = ['classification_' + str(yy) for yy in range(1985, 2025)]
-        self.years = [yy for yy in range(1985, 2025)]
+        self.lstbandNames = ['classification_' + str(yy) for yy in range(1985, 2026)]
+        self.years = [yy for yy in range(1985, 2026)]
         # print("lista de years \n ", self.years)
         self.conectarPixels = conectarPixels
         self.version = vers
         # self.model = modelo
         # BACIA_7712_2024_GTB_col10-v_4
-        self.name_imgClass = f"BACIA_{nameBacia}_2024_GTB_col10-v_{self.version}"
+        self.name_imgClass = f"BACIA_{nameBacia}_2025_GTB_col10-v_{4}" # self.version
         # self.name_imgClass = 'BACIA_corr_mista_' + nameBacia + '_V2'
         
         
@@ -96,15 +96,13 @@ class processo_gapfill(object):
         lstBandas = [f'classification_{yy}' for yy in self.years] 
         for cc, yyear in enumerate(self.years):
             bandActive = f'classification_{yyear}'
-            if yyear == 1985:                
-                currentImage = (self.imgClass                                       
+            currentImage = (self.imgClass                                       
                                     .select(bandActive)
-                                    .remap(self.options['classMapB'], self.options['classNew'])
-                                    .unmask(valueMask)
+                                    .remap(self.options['classMapB'], self.options['classNew'])                                  
                                     .rename(bandActive)
                             )
-                print("adding >> ", bandActive)
-
+            print("adding >> ", bandActive)
+            if yyear == 1985:                
                 currentMap9 = (self.imgMap9
                                     .select(bandActive)
                                     .remap(self.options['classMapB'],self.options['classNew'])      
@@ -112,56 +110,38 @@ class processo_gapfill(object):
                             )
                 print(currentMap9.bandNames().getInfo())
                 # selecciona todos os pixels que estão com gap e que tem agora valor valueMask
-                maskGap = currentImage.eq(valueMask)
+                maskGap = currentImage.mask().Not() #.gt(1).unmask(valueMask).eq(valueMask)
                 bandBlend = currentMap9.updateMask(maskGap)
                 # onde estão os valores com valueMask colocar os pixels mapbiomas
-                newBandActive = currentImage.blend(bandBlend)
+                newBandActive = currentImage.unmask(0).blend(bandBlend)
 
-                # if yyear > 1985:
-                #     # refazer o processo com a banda anterior 
-                #     maskGap = newBandActive.eq(valueMask)
-                #     # onde estão os valores com valueMask colocar os pixels mapbiomas
-                #     newBandActive = newBandActive.updateMask(self.bacia_raster).where(maskGap, currentMap9)
+            elif  yyear > 1985 and yyear < 2024:                                          
 
-                # seleciona todos os pixels que não tem valor do gap 
-                # maskOutGap = currentImage.neq(valueMask)
-                # newBandActive = newBandActive.updateMask(maskOutGap).updateMask(self.bacia_raster)
-                # # previousImage = copy.deepcopy(newBandActive)                
-                # previousImage = copy.deepcopy(newBandActive)
-            elif  yyear > 1985 and yyear < 2024:
-                currentImage = self.imgClass.select(bandActive).unmask(valueMask)                                    
-
-                print("adding >> ", bandActive)
-                maskGap = currentImage.eq(valueMask)
+                maskGap = currentImage.mask().Not() #.gt(1).unmask(valueMask).eq(valueMask)
                 # get the first Pixel without null
                 rasterFirst = self.imgClass.select(lstBandas[cc + 1:])
-                rasterFirst = rasterFirst.reduce(ee.Reducer.first())
-                
-                bandBlend = currentMap9.updateMask(maskGap)
-                 # onde estão os valores com valueMask colocar os pixels mapbiomas
-                newBandActive = currentImage.blend(rasterFirst)
-                newBandActive = (newBandActive
-                                        .remap(self.options['classMapB'], self.options['classNew'])
-                                        .rename(bandActive)
-                            )     
+                rasterFirst = (rasterFirst
+                                .reduce(ee.Reducer.firstNonNull())
+                                .updateMask(self.bacia_raster)
+                        )
+                rasterFirst = rasterFirst.updateMask(maskGap)
+
+                # onde estão os valores com valueMask colocar os pixels mapbiomas
+                newBandActive = currentImage.unmask(0).blend(rasterFirst)
 
                 if yyear == 2023:
-                     previousImage = copy.deepcopy(newBandActive)        
+                    previousImage = copy.deepcopy(newBandActive)  
+                    print("addiding 2023 em imagem previa ")
             else:
-                currentImage = (self.imgClass
-                                    .select(bandActive)
-                                    .remap(self.options['classMapB'], self.options['classNew'])
-                                    .unmask(valueMask)
-                                    .rename(bandActive)
-                        )    
+                print("finalizando  >> ", bandActive)
                 # selecciona todos os pixels que estão com gap e que tem agora valor valueMask
-                maskGap = currentImage.eq(valueMask)            
-                newBandActive = currentImage.where(maskGap, previousImage)
+                maskGap = currentImage.mask().Not()  #.gt(1).unmask(valueMask).eq(valueMask)            
+                newBandActive = currentImage.unmask(0).where(maskGap.eq(1), previousImage)
             
             ### ==============================================================####
             baseImgMap = baseImgMap.addBands(newBandActive)    
             # print(baseImgMap.bandNames().getInfo())           
-
+        # sys.exit()
         imageFilledTn = ee.Image.cat(baseImgMap).select(self.lstbandNames)
         return imageFilledTn.updateMask(self.bacia_raster)
 
@@ -182,7 +162,7 @@ class processo_gapfill(object):
                             'model', "GTB",
                             'type_filter', 'gap_fill',
                             'collection', '10.0',
-                            'id_bacia', self.id_bacias,
+                            'id_bacias', self.id_bacias,
                             'sensor', 'Landsat',
                             'system:footprint' , self.geom_bacia.coordinates()
                         )
@@ -243,7 +223,7 @@ def gerenciador(cont):
         switch_user(param['conta'][str(cont)])
         projAccount = get_project_from_account(param['conta'][str(cont)])
         try:
-            ee.Initialize(project= projAccount) # project='ee-cartassol'
+            ee.Initialize(project= projAccount) # project='ee-cartas775sol'
             print('The Earth Engine package initialized successfully!')
         except ee.EEException as e:
             print('The Earth Engine package failed to initialize!') 
@@ -265,20 +245,20 @@ def gerenciador(cont):
 
 
 listaNameBacias = [
-    '751', '7691', '7754', '7581', '7625', '7584', '7614', 
-    '7616', '745', '7424', '773', '7612', '7613', '752', 
-    '7618', '7561', '755', '7617', '7564', '761111','761112', 
-    '7741', '7422', '76116', '7761', '7671', '7615', '7411', 
-    '7764', '757', '771', '766', '7746', '753', '764', 
-    '7541', '7721', '772', '7619', '7443','7544', '7438', 
-    '763', '7591', '7592', '746','7712', '7622', '765', 
+    # '751', '7691', '7754', '7581', '7625', '7584', '7614', 
+    # '7616', '745', '7424', '773', '7612', '7613', '752', 
+    # '7618', '7561', '755', '7617', '7564', '761111','761112', 
+    # '7741', '7422', '76116', '7761', '7671', '7615', '7411', 
+    # '7764', '757', '771', '766', '7746', '753', '764', 
+    # '7541', '7721', '772', '7619', '7443','7544', '7438', 
+    # '763', '7591', '7592', '746','7712', '7622', '765', 
 ]
-
-versionMap= 4
+# listaNameBacias = ['7746', '7619', '763']
+versionMap= 6
 cont = 49
 # cont = gerenciador(cont)
 # applyGdfilter = False
-for idbacia in listaNameBacias[1:]:
+for idbacia in listaNameBacias[:]:
     print("-----------------------------------------")
     print("----- PROCESSING BACIA {} -------".format(idbacia))    
     aplicando_gapfill = processo_gapfill(idbacia, False, versionMap) # added band connected is True

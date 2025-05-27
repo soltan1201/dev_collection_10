@@ -1,0 +1,5 @@
+
+--- Nova Execução: 2025-05-16 16:40:48 ---
+
+--- Nova Execução: 2025-05-16 16:41:21 ---
+ERRO FATAL ao processar bacia 765: EEException - Image.select: Band pattern 'classification_2020' was applied to an Image with no bands. See https://developers.google.com/earth-engine/guides/debugging#no-bands

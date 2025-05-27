@@ -69,7 +69,7 @@ class ClassMosaic_indexs_Spectral(object):
         'lsClasse': [4, 3, 12, 15, 18, 21, 22, 33],
         'lsPtos': [300, 500, 300, 350, 150, 100, 150, 300],
         "anoIntInit": 1985,
-        "anoIntFin": 2024,
+        "anoIntFin": 2025,
         'dict_classChangeBa': arqParams.dictClassRepre,
         # https://scikit-learn.org/stable/modules/ensemble.html#gradient-boosting
         'pmtGTB': {
@@ -853,11 +853,10 @@ class ClassMosaic_indexs_Spectral(object):
 
         return mosaic
     
-    def make_mosaicofromIntervalo(self, colMosaic, year_courrent):
-        band_year = [nband + '_median' for nband in self.options['bnd_L']]
-        band_drys = [bnd + '_dry' for bnd in band_year]    
+    def make_mosaicofromIntervalo(self, colMosaic, year_courrent, semetral=False):
+        band_year = [nband + '_median' for nband in self.options['bnd_L']]            
         band_wets = [bnd + '_wet' for bnd in band_year]
-
+        band_drys = [bnd + '_dry' for bnd in band_year]
         dictPer = {
             'year': {
                 'start': str(str(year_courrent)) + '-01-01',
@@ -879,7 +878,10 @@ class ClassMosaic_indexs_Spectral(object):
             }
         }       
         mosaico = None
-        lstPeriodo = ['year', 'dry', 'wet']
+        if semetral:
+            lstPeriodo = ['year', 'wet']
+        else:
+            lstPeriodo = ['year', 'dry', 'wet']
         for periodo in lstPeriodo:
             dateStart =  dictPer[periodo]['start']
             dateEnd = dictPer[periodo]['end']
@@ -896,6 +898,60 @@ class ClassMosaic_indexs_Spectral(object):
             else:
                 mosaico = mosaico.addBands(mosaictmp)
 
+        if semetral:
+            bands_period = dictPer[ 'dry']['bnds']
+            imgUnos = ee.Image.constant([1] * len(band_year)).rename(bands_period)
+            mosaico = mosaico.addBands(imgUnos)
+
+        return mosaico
+
+    def make_mosaicofromIntervalo_y25(self, colMosaic, year_courrent, semetral=False):
+        band_year = [nband + '_median' for nband in self.options['bnd_L']]            
+        band_wets = [bnd + '_wet' for bnd in band_year]
+        band_drys = [bnd + '_dry' for bnd in band_year]
+        dictPer = {
+            'year': {
+                'start': str(str(year_courrent)) + '-01-01',
+                'end': str(year_courrent) + '-12-31',
+                'surf': 'year',
+                'bnds': band_year
+            },
+            'dry': {
+                'start': str(year_courrent) + '-08-01',
+                'end': str(year_courrent) + '-12-31',
+                'surf': 'dry',
+                'bnds': band_drys
+            },
+            'wet': {
+                'start': str(year_courrent) + '-01-01',
+                'end': str(year_courrent) + '-07-31',
+                'surf': 'wet',
+                'bnds': band_wets
+            }
+        }        
+        periodo = 'wet'
+        dateStart =  dictPer[periodo]['start']
+        dateEnd = dictPer[periodo]['end']
+        bands_period = dictPer[periodo]['bnds']
+        # print("--> ", bands_period )
+        # get dry median mosaic
+        mosaico = (
+            colMosaic.select(self.options['bnd_L'])
+                .filter(ee.Filter.date(dateStart, dateEnd))
+                .max()
+                .rename(bands_period)
+        )
+        print(mosaico.bandNames().getInfo())
+        # mosaico = mosaictmp
+
+        if semetral:
+            bands_period = dictPer['dry']['bnds']
+            imgUnos = ee.Image.constant([1] * len(band_year)).rename(bands_period)
+            mosaico = mosaico.addBands(imgUnos)
+            bands_period = dictPer['year']['bnds']
+            imgUnos = ee.Image.constant([1] * len(band_year)).rename(bands_period)
+            mosaico = mosaico.addBands(imgUnos)
+
         return mosaico
 
     def get_bands_mosaicos (self):
@@ -906,7 +962,7 @@ class ClassMosaic_indexs_Spectral(object):
         return band_year + band_wets + band_drys
 
     def down_samples_ROIs(self, rois_train):
-        dictROIs = ee.FeatureCollection(rois_train).aggregate_histogram('class').getInfo()
+        # dictROIs = ee.FeatureCollection(rois_train).aggregate_histogram('class').getInfo()
         # print(dictROIs)
         # dictQtLimit = {
         #     '3': 800,
@@ -936,10 +992,11 @@ class ClassMosaic_indexs_Spectral(object):
             featCC = featCC.randomColumn()
             featCC = featCC.filter(ee.Filter.lt('random', ee.Number(limiar).toFloat()))  
             return featCC
-        for cclass in list(dictROIs.keys()):
+        for cclass in [3, 4, 12, 22, 33]:  # dictROIs.keys()
             # print(" filtering class >> ", cclass)
             feattmp = rois_train.filter(ee.Filter.eq('class', int(cclass)))
             sizeFC = feattmp.size()#.getInfo()
+            # print("cclass " , cclass, " ", sizeFC.getInfo())
             feattmp = ee.Algorithms.If(
                         ee.Algorithms.IsEqual(ee.Number(sizeFC).gt(ee.Number(dictQtLimit[str(cclass)])),1), 
                         make_random_select(feattmp, ee.Number(dictQtLimit[str(cclass)]).divide(ee.Number(sizeFC))), 
@@ -1005,7 +1062,7 @@ class ClassMosaic_indexs_Spectral(object):
         # sys.exit()
         # imglsClasxanos = ee.Image().byte()
 
-        for nyear in self.lst_year[:]:
+        for nyear in self.lst_year[-1:]:
             bandActiva = 'classification_' + str(nyear)       
             print( "banda activa: " + bandActiva)   
 
@@ -1013,28 +1070,45 @@ class ClassMosaic_indexs_Spectral(object):
             if 'BACIA_' + nomec not in self.lstIDassetS:                
 
                 #cria o classificador com as especificacoes definidas acima 
-                limitlsb = 45
+                limitlsb = 35
                 # print( bandas_fromFS[f"{_nbacia}_{nyear}"])            
-                lstbandas_import = bandas_fromFS[f"{_nbacia}_{nyear}"]['features']
+                # lstbandas_import = bandas_fromFS[f"{_nbacia}_{nyear}"]['features']
+                if nyear < 2025:
+                    lstbandas_import = bandas_fromFS[f"{_nbacia}_{nyear}"]['features']
+                else:
+                    lstbandas_import = bandas_fromFS[f"{_nbacia}_{2024}"]['features']
                 # obandas_imports = [bnd for bnd in lstbandas_import if  not in bnd]
                 # obandas_imports = obandas_imports[:limitlsb]
                 outrasBandas = ['stdDev', 'solpe']
                 bandas_imports = []
                 for bnd_index in lstbandas_import:
-                    adding = True
+                    adding = True                   
                     for nbnd in  outrasBandas:
                         if nbnd in bnd_index:
                             adding = False
                     if '_1' in bnd_index or '_2' in bnd_index:
                         adding = False
+                    if '_dry' in bnd_index:
+                        adding = False
+                    #     band_cruz = bnd_index.replace('_dry', '_wet')
+                    #     if band_cruz not in bandas_imports:
+                    #         adding = True                    
                     if adding:
-                        bandas_imports.append(bnd_index)
-
-                print(f" numero de bandas selecionadas {len(bandas_imports)} ") 
+                        if '_wet' not in bnd_index:
+                            if bnd_index + '_wet' not in bandas_imports:
+                                bandas_imports.append(bnd_index + '_wet')
+                        else:
+                            bandas_imports.append(bnd_index)
                 bandas_imports = bandas_imports[:limitlsb]
-
+                print(f" numero de bandas selecionadas {len(bandas_imports)} ") 
+                # print(bandas_imports)
+                
+                # sys.exit()
                 # nameFeatROIs = 'rois_grade_' + _nbacia
-                nameFeatROIs =  f"{_nbacia}_{nyear + 1}_cd" 
+                if nyear < 2025:
+                    nameFeatROIs =  f"{_nbacia}_{nyear}_cd"  
+                else:
+                    nameFeatROIs =  f"{_nbacia}_{2024}_cd"
                 dicAttention = {
                     '7622': {0: [1985], 1: 1986},
                     '751': {0: [1994,1995,1996], 1: 1997},
@@ -1059,6 +1133,7 @@ class ClassMosaic_indexs_Spectral(object):
                         nameFeatROIs =  f"{_nbacia}_{dicAttention['746_3'][1]}_cd"
 
                 print("loading Rois with name =>>>>>> ", nameFeatROIs)
+
                 asset_rois = self.options['asset_joinsGrBa']
                 if not process_mosaic_EE:
                     asset_rois = self.options['asset_joinsGrBaMB']
@@ -1067,77 +1142,85 @@ class ClassMosaic_indexs_Spectral(object):
                     dir_asset_rois = os.path.join(asset_rois, nameFeatROIs)
                     print(f"load samples from idAsset >> {dir_asset_rois}")
                     ROIs_toTrain = ee.FeatureCollection(dir_asset_rois) 
-                    ROIs_toTrain = ROIs_toTrain.filter(ee.Filter.notNull(bandas_imports))                
+                    # print(ROIs_toTrain.size().getInfo())
+                    # print(ROIs_toTrain.aggregate_histogram('class').getInfo())
+                    bandExtra = [nband + '_median_wet' for nband in self.options['bnd_L']]  
+                    ROIs_toTrain = ROIs_toTrain.filter(ee.Filter.neq('class', 21.0))
+                    ROIs_toTrain = ROIs_toTrain.filter(ee.Filter.notNull(bandExtra))                
                     ROIs_toTrain = ROIs_toTrain.map(lambda f: f.set('class', ee.Number.parse(f.get('class')).toFloat().toInt8()))
-                    
+                    # ROIs_toTrain = ROIs_toTrain.select(bandas_imports)
+                    print(ROIs_toTrain.size().getInfo())
+                    # print(ROIs_toTrain.aggregate_histogram('class').getInfo())
                     # otherROIsneighbor = self.get_ROIs_from_neighbor(lstSoViz, asset_rois, nyear)
                     ROIs_toTrain =  self.down_samples_ROIs(ROIs_toTrain)  #.merge(otherROIsneighbor)
-                    ROIs_toTrain = ROIs_toTrain.filter(ee.Filter.neq('class', 21))
-                    # print(bandas_imports)
+                    print(" saindo do processo downsamples ")                    
+                    # print(ROIs_toTrain.aggregate_histogram('class').getInfo())
+                    # lstBandasROIS = ROIs_toTrain.first().propertyNames().getInfo()
+                    # print(lstBandasROIS)
+                    # print(len(bandas_imports))
+                    # tmpBandasImp = [col for col in bandas_imports if col in lstBandasROIS]
+                    # print(" >> ", len(bandas_imports))
+                    print(" fez down samples nos ROIs  ")
                     # sys.exit()
                     # cria o mosaico a partir do mosaico total, cortando pelo poligono da bacia 
                     date_inic = ee.Date.fromYMD(int(nyear),1,1)      
                     date_end = ee.Date.fromYMD(int(nyear),12,31)   
-                    if process_mosaic_EE:
-                        # de mosaico EE y para mosaico Mapbiomas (X)
-                        lstCoef = [0.8425, 0.8957, 0.9097, 0.3188, 0.969, 0.9578]
-                        bandsCoef = ee.Image.constant(lstCoef + lstCoef + lstCoef)
-                        lstIntercept = [106.7546, 115.1553, 239.0688, 1496.4408, 392.3453, 366.57]
-                        bandsIntercept = ee.Image.constant(lstIntercept + lstIntercept + lstIntercept)
+                    if nyear < 2025: 
+                        if process_mosaic_EE:
+                            # de mosaico EE y para mosaico Mapbiomas (X)
+                            lstCoef = [0.8425, 0.8957, 0.9097, 0.3188, 0.969, 0.9578]
+                            bandsCoef = ee.Image.constant(lstCoef + lstCoef + lstCoef)
+                            lstIntercept = [106.7546, 115.1553, 239.0688, 1496.4408, 392.3453, 366.57]
+                            bandsIntercept = ee.Image.constant(lstIntercept + lstIntercept + lstIntercept)
 
-                        colmosaicMapbiomas = (imagens_mosaico.filter(ee.Filter.eq('year', nyear))
-                                        .median().updateMask(bacia_raster))
-                        imagens_mosaicoEEv = colmosaicMapbiomas.multiply(bandsCoef).add(bandsIntercept) 
-                        imagens_mosaicoEEv = imagens_mosaicoEEv.divide(10000)#.rename(param.bnd_L)
-                        # print(f" we have {imagens_mosaicoEEv.bandNames().getInfo()} images ")
-                    
-                        #cria o mosaico a partir do mosaico total, cortando pelo poligono da bacia    
-                        mosaicColGoogle = imagens_mosaicoEE.filter(ee.Filter.date(date_inic, date_end))        
-                        mosaicoBuilded = self.make_mosaicofromIntervalo(mosaicColGoogle, nyear) 
-                        mosaicoBuilded = mosaicoBuilded.updateMask(bacia_raster)
-                        print(f" we have {mosaicoBuilded.bandNames().getInfo()} images do mosaico mensal do google ")
-                        maskGaps = mosaicoBuilded.unmask(-9999).eq(-9999).updateMask(bacia_raster)
-                        ## preenchendo o gap do mosaico do EE pelo mosaico dao mapbiomas
-                        mosaicoBuilded = mosaicoBuilded.unmask(-9999).where(maskGaps, imagens_mosaicoEEv)
-                        maskGaps = mosaicoBuilded.neq(-9999)
-                        mosaicoBuilded = mosaicoBuilded.updateMask(maskGaps).updateMask(bacia_raster)
-                        # print(f" we have {mosaicoBuilded.bandNames().getInfo()} images ")
-                    else:                
-                        ######  de mosaico Mapbiomas para mosaico EE (X)    #####
-                        lstCoef = [6499.0873, 8320.9741, 7243.8252, 5944.0973, 7494.4502, 7075.1618]
-                        bandsCoef = ee.Image.constant(lstCoef + lstCoef + lstCoef)
-                        lstIntercept = [64.0821, 55.127, 36.7782, 1417.7931, 325.8045, 141.9352]
-                        bandsIntercept = ee.Image.constant(lstIntercept + lstIntercept + lstIntercept)             
-
-                        #cria o mosaico a partir do mosaico total, cortando pelo poligono da bacia    
-                        mosaicColGoogle = imagens_mosaicoEE.filter(ee.Filter.date(date_inic, date_end))        
-                        mosaicoGoogle = self.make_mosaicofromIntervalo(mosaicColGoogle, nyear) 
-                        mosaicoGoogle = mosaicoGoogle.updateMask(bacia_raster)
-                        imagens_mosaicoEEv = mosaicoGoogle.multiply(bandsCoef).add(bandsIntercept)
+                            colmosaicMapbiomas = (imagens_mosaico.filter(ee.Filter.eq('year', nyear))
+                                            .median().updateMask(bacia_raster))
+                            imagens_mosaicoEEv = colmosaicMapbiomas.multiply(bandsCoef).add(bandsIntercept) 
+                            imagens_mosaicoEEv = imagens_mosaicoEEv.divide(10000)#.rename(param.bnd_L)
+                            # print(f" we have {imagens_mosaicoEEv.bandNames().getInfo()} images ")
                         
-                        colmosaicMapbiomas = (imagens_mosaico.filter(ee.Filter.eq('year', nyear))
-                                                    .median().updateMask(bacia_raster))
-                        maskGaps = mosaicoBuilded.unmask(-9999).eq(-9999).updateMask(bacia_raster)
-                        # ## preenchendo o gap do mosaico do EE pelo mosaico dao mapbiomas
-                        # ## preenchendo o gap do mosaico do EE pelo mosaico dao mapbiomas
-                        mosaicoBuilded = mosaicoBuilded.unmask(-9999).where(maskGaps, imagens_mosaicoEEv)
-                        maskGaps = mosaicoBuilded.neq(-9999)
-                        mosaicoBuilded = mosaicoBuilded.updateMask(maskGaps).updateMask(bacia_raster)
-                        # print(f" we have {mosaicoBuilded.bandNames().getInfo()} images ")
+                            #cria o mosaico a partir do mosaico total, cortando pelo poligono da bacia    
+                            mosaicColGoogle = imagens_mosaicoEE.filter(ee.Filter.date(date_inic, date_end))        
+                            mosaicoBuilded = self.make_mosaicofromIntervalo(mosaicColGoogle, nyear) 
+                            mosaicoBuilded = mosaicoBuilded.updateMask(bacia_raster)
+                            print(f" we have {mosaicoBuilded.bandNames().getInfo()} images do mosaico mensal do google ")
+                            maskGaps = mosaicoBuilded.unmask(-9999).eq(-9999).updateMask(bacia_raster)
+                            ## preenchendo o gap do mosaico do EE pelo mosaico dao mapbiomas
+                            mosaicoBuilded = mosaicoBuilded.unmask(-9999).where(maskGaps, imagens_mosaicoEEv)
+                            maskGaps = mosaicoBuilded.neq(-9999)
+                            mosaicoBuilded = mosaicoBuilded.updateMask(maskGaps).updateMask(bacia_raster)
+                            # print(f" we have {mosaicoBuilded.bandNames().getInfo()} images ")
+                        else:                
+                            ######  de mosaico Mapbiomas para mosaico EE (X)    #####
+                            lstCoef = [6499.0873, 8320.9741, 7243.8252, 5944.0973, 7494.4502, 7075.1618]
+                            bandsCoef = ee.Image.constant(lstCoef + lstCoef + lstCoef)
+                            lstIntercept = [64.0821, 55.127, 36.7782, 1417.7931, 325.8045, 141.9352]
+                            bandsIntercept = ee.Image.constant(lstIntercept + lstIntercept + lstIntercept)             
 
-                    print("----- calculado todos os 102 indices ---------------------")
+                            #cria o mosaico a partir do mosaico total, cortando pelo poligono da bacia    
+                            mosaicColGoogle = imagens_mosaicoEE.filter(ee.Filter.date(date_inic, date_end))        
+                            mosaicoGoogle = self.make_mosaicofromIntervalo(mosaicColGoogle, nyear) 
+                            mosaicoGoogle = mosaicoGoogle.updateMask(bacia_raster)
+                            imagens_mosaicoEEv = mosaicoGoogle.multiply(bandsCoef).add(bandsIntercept)
+                            
+                            colmosaicMapbiomas = (imagens_mosaico.filter(ee.Filter.eq('year', nyear))
+                                                        .median().updateMask(bacia_raster))
+                            maskGaps = mosaicoBuilded.unmask(-9999).eq(-9999).updateMask(bacia_raster)
+                            # ## preenchendo o gap do mosaico do EE pelo mosaico dao mapbiomas
+                            # ## preenchendo o gap do mosaico do EE pelo mosaico dao mapbiomas
+                            mosaicoBuilded = mosaicoBuilded.unmask(-9999).where(maskGaps, imagens_mosaicoEEv)
+                            maskGaps = mosaicoBuilded.neq(-9999)
+                            mosaicoBuilded = mosaicoBuilded.updateMask(maskGaps).updateMask(bacia_raster)
+                            # print(f" we have {mosaicoBuilded.bandNames().getInfo()} images ")
+                    else:
+                        mosaicColGoogle = imagens_mosaicoEE.filter(ee.Filter.date(date_inic, date_end))        
+                        # print(mosaicColGoogle.size().getInfo())
+                        mosaicoBuilded = self.make_mosaicofromIntervalo_y25(mosaicColGoogle, nyear,  True) 
+                        # print(f" we have {mosaicoBuilded.bandNames().getInfo()} images ")
+                    # print("----- calculado todos os 102 indices ---------------------")
                     mosaicProcess = self.CalculateIndice(mosaicoBuilded.updateMask(bacia_raster))
-                    
-                    # lstBandasBuildMoisac = mosaicProcess.bandNames().getInfo()
-                    # print(f" we have {len(lstBandasBuildMoisac)} bands builded in the mosaic ")
-                    # for ii in range(0, len(lstBandasBuildMoisac) + 1, 5):
-                    #     print(lstBandasBuildMoisac[ii : ii + 5])
-                    # sys.exit()
-                    
-                    
-                    # print("distribuição de ROIs \n >>> ", ROIs_toTrain.aggregate_histogram('class').getInfo())
-                    # print("parameter loading ", self.dictHiperPmtTuning[_nbacia])
-                    # gradeExpMemo = ['763','7438','7443','7721','7613','7616','7615','771','7625']
+                    # print(f" we have {mosaicProcess.bandNames().getInfo()} images ")
+                    print("calculou todas as bandas necesarias ")
                     # sys.exit()
                     gradeExpMemo = [
                         '7625', '7616', '7613', '7618', '7617', '761112', '7741', 
@@ -1159,11 +1242,16 @@ class ClassMosaic_indexs_Spectral(object):
                     print("pmtros Classifier ==> ", pmtroClass)
                     
                     # ee.Classifier.smileGradientTreeBoost(numberOfTrees, shrinkage, samplingRate, maxNodes, loss, seed)
+                    # print("antes de classificar ", ROIs_toTrain.first().propertyNames().getInfo())
+                    lstNN = []
+                    for col in bandas_imports:
+                        if col not in bandas_imports:
+                            lstNN.append(col)
                     classifierGTB = ee.Classifier.smileGradientTreeBoost(**pmtroClass).train(
-                                                        ROIs_toTrain, 'class', bandas_imports)              
+                                                        ROIs_toTrain, 'class', lstNN)              
                     classifiedGTB = mosaicProcess.classify(classifierGTB, bandActiva)        
                     # print("classificando!!!! ")
-
+                    # sys.exit()
                     # se for o primeiro ano cria o dicionario e seta a variavel como
                     # o resultado da primeira imagem classificada
                     print("addicionando classification bands = " , bandActiva)            
@@ -1195,10 +1283,11 @@ class ClassMosaic_indexs_Spectral(object):
                     # imglsClasxanos = imglsClasxanos.set("system:footprint", baciabuffer.coordinates())
                     classifiedGTB = classifiedGTB.set("system:footprint", baciabuffer.coordinates())
                     # exporta bacia   .coordinates()
-                    self.processoExportar(classifiedGTB, baciabuffer, nomec, process_mosaic_EE) 
+                    self.processoExportar(classifiedGTB, baciabuffer, nomec, process_mosaic_EE)
+                     
                 except:
                     print("-----------FALTANDO AS AMOSTRAS ----------------")
-
+                sys.exit()
         else:
             print(f' bacia >>> {nomec}  <<<  foi FEITA ')            
 

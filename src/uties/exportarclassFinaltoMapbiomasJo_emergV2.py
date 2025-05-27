@@ -7,14 +7,23 @@
 ## Produzido por Geodatin - Dados e Geoinformação       ##
 ##  DISTRIBUIDO COM GPLv2                               ##
 #########################################################
-
-import ee 
+import ee
+import os 
 import sys
+from pathlib import Path
 import collections
 collections.Callable = collections.abc.Callable
 
+pathparent = str(Path(os.getcwd()).parents[0])
+sys.path.append(pathparent)
+print("parents ", pathparent)
+from configure_account_projects_ee import get_current_account, get_project_from_account
+from gee_tools import *
+projAccount = get_current_account()
+print(f"projetos selecionado >>> {projAccount} <<<")
+
 try:
-    ee.Initialize(project='mapbiomas-brazil')
+    ee.Initialize(project= projAccount)
     print('The Earth Engine package initialized successfully!')
 except ee.EEException as e:
     print('The Earth Engine package failed to initialize!')
@@ -23,13 +32,14 @@ except:
     raise
 
 
-
 param = {
     'asset_caat_buffer': 'users/CartasSol/shapes/caatinga_buffer5km',
     'outputAsset': 'projects/mapbiomas-brazil/assets/LAND-COVER/COLLECTION-10/GENERAL/classification-caa', 
-    'inputAsset': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/POS-CLASS/MergerV5',   
+    'assetFilters': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/POS-CLASS/transitionTest',
+    'inputAsset': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/POS-CLASS/MergerV6',   
     'biome': 'CAATINGA', #configure como null se for tema transversal
-    'version': 1,
+    'version_output': 4,
+    'version_input': 8,
     'collection': 10.0,
     'source': 'geodatin',
     'setUniqueCount': True,
@@ -61,20 +71,28 @@ bioma5kbuf = bioma5kbuf.map(lambda f: f.set('id_codigo', 1))
 bioma5k_raster = bioma5kbuf.reduceToImage(['id_codigo'], ee.Reducer.first()).gt(0) 
 bioma5kbuf = bioma5kbuf.geometry()
 layerFloresta = None
-imgColExp = ee.ImageCollection(param['inputAsset'])
+imgColExp = (ee.ImageCollection(param['inputAsset'])
+                    .filter(ee.Filter.eq('version', param['version_input']))
+    )
+imgComplem = (ee.ImageCollection(param['assetFilters'])
+                    .filter(ee.Filter.eq('version', param['version_input'])))
+
 print("lista de bandas da imagem min \n ", imgColExp.size().getInfo())
 
 for ii, year in enumerate(range(1985, 2025)):  #        
     bandaAct = 'classification_' + str(year) 
-    name = param['biome'] + '-' + str(year) + '-' + str(param['version'])
+    name = param['biome'] + '-' + str(year) + '-' + str(param['version_output'])
     imgExtraBnd = imgColExp.select(bandaAct).min()
+    imgComplemBnd = imgComplem.select(bandaAct).min()
     print("layer  ", imgExtraBnd.bandNames().getInfo() )
     # sys.exit()
+    imgExtraBnd = imgExtraBnd.where(imgExtraBnd.eq(0), imgComplemBnd)
+    imgExtraBnd = imgExtraBnd.rename(bandaAct)
     
     imgYear = (imgExtraBnd.updateMask(bioma5k_raster)
                     .set('biome', param['biome'])
                     .set('year', year)
-                    .set('version', str(param['version']))
+                    .set('version', str(param['version_output']))
                     .set('collection', param['collection'])
                     .set('source', param['source'])
                     .set('theme',None)
@@ -82,7 +100,7 @@ for ii, year in enumerate(range(1985, 2025)):  #
             )
 
     
-    name = param['biome'] + '-' + str(year) + '-' + str(param['version'])
+    name = param['biome'] + '-' + str(year) + '-' + str(param['version_output'])
     if processExport:
         optExp = {   
             'image': imgYear.byte(), 

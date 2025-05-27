@@ -42,7 +42,7 @@ param = {
     'asset_collection_by_year': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/Classifier/ClassifyV2YX',
     'asset_output': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/Classifier/ClassifyVA',
     'bioma': "CAATINGA",
-    'version': 5,
+    'version': 6,
 }
 nameBacias = [
     # '7691', '7754', '7581', '7625', '7584', '751', '7614', 
@@ -51,8 +51,7 @@ nameBacias = [
     # '7741', '7422', '76116', '7761', '7671', '7615', '7411', 
     # '7764', '757', '771', '766', '7746', '753', '764', 
     # '7541', '7721', '772', '7619', '7443','7544', '7438', 
-    # '763', '7591', '7592', '746','7712', #
-    '752', '765', '7622',
+    # '763', '7591', '7592', '746','7712', '752', '765', '7622',
 ]
 def processoExportar(mapaRF, regionB, nomeDesc):
     idasset =  os.path.join(param['asset_output'] , nomeDesc)
@@ -73,7 +72,7 @@ def processoExportar(mapaRF, regionB, nomeDesc):
     for keys, vals in dict(task.status()).items():
         print ( "  {} : {}".format(keys, vals))
 
-lst_year = [yyear for yyear in range(1985, 2025)]
+lst_year = [yyear for yyear in range(1985, 2026)]
 lstbaciabuffer = ee.FeatureCollection(param['asset_bacias_buffer'])
         
 imCol90 = ee.Image(param['assetMapbiomas90'])
@@ -83,7 +82,7 @@ imColbyYear = ee.ImageCollection(param['asset_collection_by_year'])
 # print(lstIdCodbYear)
 # lstExc = ['751', '7625']
 # lstNameBacias = [f'BACIA_{cbasin}_2024_GTB_col10-v_4' for cbasin in lstExc]
-for nbacia in nameBacias:
+for nbacia in nameBacias[:]:
     print(f'load {nbacia} ')
     baciabuffer = lstbaciabuffer.filter(ee.Filter.eq('nunivotto4', nbacia))
     print(f"know about the geometry 'nunivotto4' >>  {nbacia} loaded < {baciabuffer.size().getInfo()} > geometry" ) 
@@ -93,19 +92,19 @@ for nbacia in nameBacias:
     
     colBacia = ee.Image().byte()
     lstBands = []
-    for nyear in range(1985, 2025):
+    for nyear in range(1985, 2026):
         bandActiva = f'classification_{nyear}' 
         newNameInd = f'BACIA_{nbacia}_{nyear}_GTB_col10-v_4'
         print("addding ", newNameInd)
         imMapsYY = imColbyYear.filter(ee.Filter.eq('system:index', newNameInd)).first()
-        print(imMapsYY.bandNames().getInfo())
+        # print(imMapsYY.bandNames().getInfo())
         imMapsYY = (ee.Image(imMapsYY).remap(param['classMapB'], param['classNew'])
                                 .toUint8().rename(bandActiva))
         colBacia = colBacia.addBands(imMapsYY)
         lstBands.append(bandActiva)
     
     colBacia = colBacia.select(lstBands)
-    print(colBacia.bandNames().getInfo())
+    # print(colBacia.bandNames().getInfo())
     # sys.exit()
     mydict = {
             'id_bacia': nbacia,
@@ -114,9 +113,8 @@ for nbacia in nameBacias:
             'classifier': 'GTB',
             'collection': '10.0',
             'sensor': 'Landsat',
-            'source': 'geodatin',  
-            # 'year': nyear              
+            'source': 'geodatin'        
         }                    
     colBacia = colBacia.set(mydict)
     colBacia = colBacia.set("system:footprint", baciabuffer.coordinates())
-    processoExportar(colBacia, baciabuffer, newNameInd)
+    processoExportar(colBacia, baciabuffer, newNameInd.replace('_v_4', '_v6'))

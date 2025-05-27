@@ -9,3 +9,4 @@ src/utils/*
 src/corregir_areas/*
 src/configure_account_projects_ee.py
 src/gee_tools.py
+src/filterOlds

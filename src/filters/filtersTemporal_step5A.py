@@ -37,10 +37,10 @@ except:
 class processo_filterTemporal(object):
 
     options = {
-            'output_asset': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/POS-CLASS/Temporal',
-            # 'input_asset': 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/POS-CLASS/FrequencyV3',
+            'output_asset': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/POS-CLASS/TemporalCC',
+            'input_asset': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/POS-CLASS/Frequency',
             # 'input_asset': 'projects/mapbiomas-workspace/AMOSTRAS/col8/CAATINGA/POS-CLASS/merge/',
-            'input_asset': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/POS-CLASS/Spatial',
+            # 'input_asset': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/POS-CLASS/Spatial',
             # 'input_asset': 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/POS-CLASS/TemporalV3',
             'asset_bacias_buffer' : 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/bacias_hidrografica_caatinga_49_regions',            
             'last_year' : 2024,
@@ -51,8 +51,8 @@ class processo_filterTemporal(object):
 
     def __init__(self):
         # self.id_bacias = nameBacia
-        self.versoutput = 4
-        self.versionInput = 4
+        self.versoutput = 5
+        self.versionInput = 5
         self.geom_bacia = ee.FeatureCollection(self.options['asset_bacias_buffer'])              
         self.years = [yy for yy in range(self.options['first_year'], self.options['last_year'] + 1)]  # ,  - 1, -1
         # self.years = [kk for kk in years.sort(reverse= False)]
@@ -62,21 +62,12 @@ class processo_filterTemporal(object):
         self.lstBandFinal =  ['classification_' + str(yy) for yy in self.years]
         print("lista de anos ", self.lstBandFinal)
         # self.ordem_exec_first = [4,21,4,3,12] #
-        self.ordem_exec_last = [4]  # 29
-        self.ordem_exec_middle = [4, 3, 21] # ,33, 22,      21,4,3,12
+        self.ordem_exec_last = [3,4]  # 29
+        self.ordem_exec_middle = [3, 4, 21] # ,33, 22,      21,4,3,12
 
         self.colectAnos = [self.mapeiaAnos(ano, self.options['janela'], self.years) for ano in self.years]
 
-        # self.colectAnos = [self.mapeiaAnos(
-        #                         ano, self.options['janela'], self.years) for ano in self.years]
-        # dictYY = {}
-        # for cc, lstYY in enumerate(colectAnos):
-        #     # print(cc, " <==>  ", lstYY)
-        #     dictYY[str(cc)] = lstYY
-        # self.colectAnos = []
-        # for cc in range(len(self.years)-1, -1, -1):
-        #     print(cc, " <> ",dictYY[str(cc)])
-        #     self.colectAnos.append(dictYY[str(cc)])
+
 
         # sys.exit()
     ################### CONJUNTO DE REGRAS PARA CONSTRUIR A LISTA DE BANDAS ##############
@@ -148,7 +139,8 @@ class processo_filterTemporal(object):
         mmask = imagem.select([0]).eq(valor).And(
                     imagem.select([1]).neq(valor)).And(
                         imagem.select([2]).eq(valor)).unmask(0)    
-        muda_img = imagem.select([1]).mask(mmask.eq(1)).where(mmask.eq(1), valor)
+        # muda_img = imagem.select([1]).mask(mmask.eq(1)).where(mmask.eq(1), valor)
+        muda_img = mmask.eq(1).multiply(valor)
         return imagem.select([1]).blend(muda_img)
 
     def mask_4_years (self, valor, imagem):
@@ -159,10 +151,10 @@ class processo_filterTemporal(object):
                         imagem.select([2]).neq(valor)).And(
                             imagem.select([3]).eq(valor))
         
-        muda_img = imagem.select([1]).mask(mmask.eq(1)).where(mmask.eq(1), valor) 
-        muda_img_post = imagem.select([2]).mask(mmask.eq(1)).where(mmask.eq(1), valor) 
+        muda_img = mmask.eq(1).multiply(valor) 
+        # muda_img_post = imagem.select([2]).mask(mmask.eq(1)).where(mmask.eq(1), valor) 
         # print("  <> ", imagem.select([2]).bandNames().getInfo())
-        img_out = imagem.select([1]).blend(muda_img).addBands(imagem.select([2]).blend(muda_img_post))
+        img_out = imagem.select([1]).blend(muda_img).addBands(imagem.select([2]).blend(muda_img))
         return img_out
 
     def mask_5_years (self, valor, imagem):
@@ -195,9 +187,10 @@ class processo_filterTemporal(object):
                                 .filter( ee.Filter.eq('janela', self.options['janela'] - 1))
                                 .first() 
                         )
-        else:            
+        else:     
+            print( " load images spatial ")       
             imgClass = (ee.ImageCollection(self.options['input_asset'])
-                                .filter(ee.Filter.eq('id_bacia', id_bacias))
+                                .filter(ee.Filter.eq('id_bacias', id_bacias))
                                 .filter(ee.Filter.eq('version',  self.versionInput))
                                 .first()    
                         )
@@ -211,74 +204,57 @@ class processo_filterTemporal(object):
         # sys.exit()
         # print(" --------- lista de bandas -------------\n", self.colectAnos)
         if self.options['janela'] == 3:
-            for id_class in self.ordem_exec_middle[:]:
-                imgOutput = ee.Image().byte()
-                rasterbefore = ee.Image().byte()
-                print("processing class {} == janela {} ".format(id_class, self.options['janela'] )) 
-
-                for cc, lstyear in enumerate(self.colectAnos):
-                    print("  => ", lstyear)
+            print(f" ==== processing janela { self.options['janela']} ====== ")             
+                
+            rasterbefore = ee.Image().byte()                
+            imgOutput = ee.Image().byte()
+            for cc, lstyear in enumerate(self.colectAnos):
+                print(" list of Years  => ", lstyear)
+                mapa_raster = copy.deepcopy(imgClass.select(lstyear))
+                for id_class in self.ordem_exec_middle[:]:
+                    print(" >>> ", id_class)
                     if cc == 0:                        
-                        # print(f" #{cc} show bands ", imgClass.select(lstyear).bandNames().getInfo())                     
-                        imgtmp = self.mask_3_years(id_class, imgClass.select(lstyear))
-                    elif cc == len(self.colectAnos) - 1:
-                        print(" show bands ", lstyear[1])
-                        imgtmp = imgClass.select(lstyear[1])
-                    else:                        
-                        rasterbefore = imgtmp 
-                        imgComposta = rasterbefore.addBands(imgClass.select(lstyear[1:]))
-                        # print(f"#{cc} show bands ", imgComposta.bandNames().getInfo())
-                        imgtmp = self.mask_3_years(id_class, imgComposta)
+                        print(f" #{cc} show bands {id_class} ")                     
+                        map_raster_YY = self.mask_3_years(id_class, mapa_raster)
+                        mapa_raster = mapa_raster.select([0]).addBands(map_raster_YY).addBands(mapa_raster.select([2]))
                     
-                    imgOutput = imgOutput.addBands(imgtmp)
+                    elif cc < len(self.colectAnos) - 1:                    
+                        print(f" #{cc} intermedios show bands {id_class} ") 
+                        imgComposta = rasterbefore.addBands(mapa_raster.select(lstyear[1:]))
+                        # print(f"#{cc} show bands ", imgComposta.bandNames().getInfo())
+                        map_raster_YY = self.mask_3_years(id_class, imgComposta)
+                        mapa_raster = mapa_raster.select([0]).addBands(map_raster_YY).addBands(mapa_raster.select([2]))
+                    else:
+                        print(" show bands ", lstyear[1])
+                        map_raster_YY = imgClass.select(lstyear[1])
+                    
+                rasterbefore = map_raster_YY 
+                imgOutput = imgOutput.addBands(map_raster_YY)
                     # time.sleep(3)
-                # sys.exit()
-                imgOutput = imgClass.select(self.lstBandFinal) # .addBands(imgOutput.select(['classification_2023']))
-                imgClass = imgOutput
-                # print("comprovando o número de bandas \n ====>", len(imgOutput.bandNames().getInfo()))
-                # sys.exit()
-            # for id_class in self.ordem_exec_last:
-            #     print("processing last 3 years class = ", id_class)
-            #     for lstyear in self.colectAnos:
-            #         # print("  => ", lstyear)
-            #         if cc == 0:
-            #             rasterbefore = imgClass.select(lstyear[0])
-            #             # print(f" #{cc} show bands ", imgClass.select(lstyear).bandNames().getInfo())                     
-            #             imgtmp = self.mask_3_years(id_class, imgClass.select(lstyear))
-            #         elif cc == len(self.colectAnos) - 1:
-            #             rasterbefore = imgtmp
-            #             # print(" show bands ", rasterbefore.addBands(imgClass.select(lstyear[1])).addBands(imgOutput.select(lstyear[2])).bandNames().getInfo())
-            #             imgtmp = self.mask_3_years(id_class, rasterbefore.addBands(imgClass.select(lstyear[1])).addBands(imgOutput.select(lstyear[-1])))
-            #         else:                        
-            #             rasterbefore = imgtmp   
-            #             # print(f"#{cc} show bands ", imgClass.select(lstyear[:2]).addBands(rasterbefore).bandNames().getInfo())
-            #             imgtmp = self.mask_3_years(id_class, imgClass.select(lstyear[:2]).addBands(rasterbefore))
-            #         imgOutput = imgOutput.addBands(imgtmp)
-
-            #     imgOutput = imgOutput.select(self.lstbandNames)
-            #     imgClass = imgOutput
-            #     print("comprovando o número de bandas \n ====>", len(imgOutput.bandNames().getInfo()))
-
+            # sys.exit()
+            imgOutput = imgClass.select(self.lstBandFinal) # .addBands(imgOutput.select(['classification_2023']))
+            imgClass = imgOutput
 
         elif self.options['janela'] == 4:
             imageTranscicao = None
-            self.colectAnos = [self.mapeiaAnos(
-                                    ano, self.options['janela'], self.years) for ano in self.years]   
-            for id_class in self.ordem_exec_middle[:]:
-                imgOutput = ee.Image().byte()
+            self.colectAnos = [self.mapeiaAnos(ano, self.options['janela'], self.years) for ano in self.years]   
+            print(f" ==== processing janela { self.options['janela']} ====== ") 
+            
+            imgOutput = ee.Image().byte()
+            for cc, lstyear in enumerate(self.colectAnos):
+                print(" list of Years  => ", lstyear)
+                mapa_raster = copy.deepcopy(imgClass.select(lstyear))                
                 print("processing class {} == janela {} ".format(id_class, self.options['janela']))            
-                for cc, lstyear in enumerate(self.colectAnos):
+                for id_class in self.ordem_exec_middle[:]:
                     # print("  => ", lstyear)
                     if cc == 0:
-                        # print(f" #{cc} => ", imgClass.select(lstyear).bandNames().getInfo()) 
-                        # imgtmp = self.mask_4_years(id_class, imgClass.select(lstyear))
-                        imgstmp = imgClass.select(lstyear[1])
-                        imageTranscicao = imgstmp
-                        # print("transcição ", imageTranscicao.bandNames().getInfo())
-
-                        imgOutput = imgOutput.addBands(imgstmp)
-                        
-                            
+                        print(f" #{cc} show bands {id_class} ")                     
+                        map_raster_YY = self.mask_4_years(id_class, mapa_raster)
+                        mapa_raster = (mapa_raster.select([0])
+                                            .addBands(map_raster_YY.select([0]))
+                                            .addBands(map_raster_YY.select([1]))
+                                            .addBands(mapa_raster.select([2]))
+                                    )                           
                     elif cc == 1: 
                         imgComposta =  imgClass.select(lstyear)                    
                         # print(f" #{cc} =>  {imgComposta.bandNames().getInfo()}  cc")
@@ -390,7 +366,7 @@ class processo_filterTemporal(object):
         
         name_toexport = f"filterTP_BACIA_{id_bacias}_GTB_J{self.options['janela']}_V{self.versoutput}"
         self.processoExportar(imageFilledConnected, name_toexport, geomBacia)    
-        # sys.exit()
+        sys.exit()
 
     #exporta a imagem classificada para o asset
     def processoExportar(self, mapaRF,  nomeDesc, geom_bacia):        
@@ -415,6 +391,7 @@ class processo_filterTemporal(object):
 param = {      
     'numeroTask': 6,
     'numeroLimit': 16,
+    'changeConta': False,
     'conta' : {
         '0': 'caatinga01',
         '4': 'caatinga02',
@@ -424,7 +401,7 @@ param = {
         '12': 'solkan1201',    
         '14': 'solkanGeodatin',
         # '16': 'diegoUEFS' ,
-        # '18': 'superconta'      
+        '16': 'superconta'      
     }
 }
 
@@ -479,7 +456,7 @@ listaNameBacias = [
 # listaNameBacias = [
 #        '752', '753','755', '758'
 #  ]
-lstBacias = []
+
 #'7421', '746', '764', '765', '772', '7741', '777',
 # input_asset = 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/POS-CLASS/SpatialV2'
 # imgCol = ee.ImageCollection(input_asset).filter(ee.Filter.neq('step', 2))
@@ -500,11 +477,13 @@ input_asset = 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/POS-CLASS/Sp
 # input_asset = 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/POS-CLASS/TemporalV3/'
 version = 4
 janela = 3
-cont = 0
+cont = 16
+if param['changeConta']:
+    cont = gerenciador(cont)
 modelo = "GTB"
 listBacFalta = []
 knowMapSaved = False
-for cc, idbacia in enumerate(listaNameBacias[:2]):   
+for cc, idbacia in enumerate(listaNameBacias[:1]):   
     if knowMapSaved:
         try:
             if 'Spatial' in input_asset:
@@ -520,8 +499,8 @@ for cc, idbacia in enumerate(listaNameBacias[:2]):
         except:
             listBacFalta.append(idbacia)
     else: 
-        if idbacia not in lstBacias:
-            cont = gerenciador(cont)
+        if idbacia not in listBacFalta:
+            
             print("----- PROCESSING BACIA {} -------".format(idbacia))        
             aplicando_TemporalFilter.applyTemporalFilter(idbacia)
 
