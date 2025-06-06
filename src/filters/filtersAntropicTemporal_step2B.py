@@ -46,15 +46,15 @@ class processo_filterTemporal(object):
             'classNat':  [1, 1, 1, 1, 1,  1,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  1,  0],    
             'last_year' : 2024,
             'first_year': 1985,
-            'janela_input': 6,
-            'janela_output' : 6,
+            'janela_input': 5,
+            'janela_output': 5,
             'step': 1
         }
 
     def __init__(self, name_bacia):
         self.id_bacias = name_bacia
-        self.versoutput = 8
-        self.versionInput = 8
+        self.versoutput = 10
+        self.versionInput = 10
         self.geom_bacia = (ee.FeatureCollection(self.options['asset_bacias_buffer'])
                     .filter(ee.Filter.eq('nunivotto4', name_bacia))
         )
@@ -72,13 +72,13 @@ class processo_filterTemporal(object):
 
         self.imgClass = (
                     ee.ImageCollection(self.options['input_asset'])
-                        # .filter(ee.Filter.eq('version', self.versionInput))
+                        .filter(ee.Filter.eq('version', self.versionInput))
                         # só o Gap-fill tem id_bacia o resto tem id_bacias
                         .filter(ee.Filter.eq('id_bacias', name_bacia ))  
                         # .first()
                 )
-        # print(" list of Image  loaded \n  ", self.imgClass.size().getInfo())
-        # print(self.imgClass.aggregate_histogram('version').getInfo())
+        print(" list of Image  loaded \n  ", self.imgClass.size().getInfo())
+        print(self.imgClass.aggregate_histogram('version').getInfo())
         # print(self.imgClass.first().getInfo())
         if 'Temporal' in self.options['input_asset']:
             self.imgClass = self.imgClass.filter(ee.Filter.eq('janela', self.options['janela_input']))
@@ -296,7 +296,7 @@ class processo_filterTemporal(object):
                 # time.sleep(0.1)
             # if showinterv:
             #     print("ver bandas de saida ", imgOutput.bandNames().getInfo())
-            sys.exit()
+            # sys.exit()
             # imgOutput = imgOutput.select(self.lstBandFinal[:])
 
         elif self.options['janela_output'] == 4:
@@ -657,7 +657,9 @@ listaNameBacias = [
     '7564', '7422', '76116', '7671', '757', '766', '753', '764',
     '7619', '7443', '7438', '763', '7622', '752'
 ]
-
+# listaNameBacias = [ "7613","7746","7754","7741","773","761112","7591","7581","757"]
+listaNameBacias = [ "7613","7746","7741","7581","757","7591"]  # 
+# listaNameBacias = ["7591"]
 # listaNameBacias = ['7411'] 
 print(" quantidade de imagens a serem revisadas >>>  ", len(listaNameBacias))
 # sys.exit()

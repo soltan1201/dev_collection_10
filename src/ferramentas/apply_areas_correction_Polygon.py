@@ -25,7 +25,7 @@ print(f"projetos selecionado >>> {projAccount} <<<")
 try:
     ee.Initialize(project= projAccount)
     print('The Earth Engine package initialized successfully!')
-except ee.EEException as projects/mapbiomas-brazil/assets/LAND-COVER/COLLECTION-10/GENERAL/classification-caae:
+except ee.EEException as e:
     print('The Earth Engine package failed to initialize!')
 except:
     print("Unexpected error:", sys.exc_info()[0])

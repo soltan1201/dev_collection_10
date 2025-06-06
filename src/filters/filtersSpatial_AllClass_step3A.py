@@ -33,16 +33,14 @@ except:
 
 param = {      
     'output_asset': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/POS-CLASS/Spatials_all',
-    'input_asset': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/POS-CLASS/Spatials_int',
-    # 'input_asset': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/POS-CLASS/Gap-fill',
-    # 'input_asset': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/POS-CLASS/TemporalA',
+    'input_asset': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/POS-CLASS/Frequency',
     'asset_bacias_buffer' : 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/bacias_hidrografica_caatinga_49_regions',            
     'last_year' : 2024,
     'first_year': 1985,
     'janela': 5,
     'step': 1,
-    'versionOut' : 8,
-    'versionInp' : 8,
+    'versionOut' : 10,
+    'versionInp' : 10,
     'numeroTask': 6,
     'numeroLimit': 50,
     'conta' : {
@@ -91,7 +89,7 @@ def apply_spatialFilterConn (name_bacia):
     if "Temporal" in param['input_asset']:
         imgClass = (imgClass
                             # .filter(ee.Filter.eq('step', 1))
-                            .filter(ee.Filter.eq('janela', 8)))
+                            .filter(ee.Filter.eq('janela', 5)))
     print(" we load ", imgClass.size().getInfo())
     imgClass = imgClass.first().updateMask(bacia_raster)
     print('  show metedata imgClass', imgClass.get('system:index').getInfo())
@@ -212,9 +210,11 @@ listaNameBacias = [
     '7541', '7721', '772', '7619', '7443','7544', '7438', 
     '763', '7591', '7592', '746','7712', '7622', '765',     
 ]
+# listaNameBacias = [ "7613","7746","7754","7741","773","761112","7591","7581","757"]
+listaNameBacias = [ "7613","7746","7741","7591","7581","757"] #
 # listaNameBacias = ['7612']
 lstBacias = []
-changeAcount = False
+changeAcount = True
 lstqFalta =  []
 cont = 16
 # input_asset = 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/POS-CLASS/Estavel'

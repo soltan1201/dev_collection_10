@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 Produzido por Geodatin - Dados e Geoinformação
@@ -7,8 +7,7 @@ DISTRIBUIDO COM GPLv2
 """
 import os
 import glob 
-import sys
-import time
+
 from tabulate import tabulate
 import math
 import pandas as pd
@@ -18,15 +17,13 @@ from tqdm import tqdm
 from sklearn import metrics
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import accuracy_score, balanced_accuracy_score
-from sklearn.metrics import classification_report
 from sklearn.metrics import precision_score, recall_score
-# from sklearn.metrics import 
 from sklearn.metrics import f1_score, jaccard_score
 tqdm.pandas()
 
 
-buildMetricsAcc = False
-buildMetAggrements = True
+buildMetricsAcc = True
+buildMetAggrements = False
 
 listaNameBacias = [
     '765', '7544', '7541', '7411', '746', '7591', '7592', 
@@ -67,10 +64,17 @@ def getPathCSV (nfolders):
 
 def allocation_erros (dfRefClass, showInfo):
     lstClassEst = [3,4,12,21,22,33]
+    print("size dataframe para confusion matrix", dfRefClass.shape)
+    dfRefCC = dfRefClass.dropna(subset=['reference', 'classification'])
+    print("   ", dfRefCC.shape)
+    print("NaNs in X_new after imputation:", np.isnan(dfRefCC).sum())
+
     conf_matrix = confusion_matrix(
-                        y_true= dfRefClass['reference'], 
-                        y_pred= dfRefClass['classification'], 
-                        labels= lstClassEst)
+                        y_true= dfRefCC['reference'], 
+                        y_pred= dfRefCC['classification'], 
+                        labels= lstClassEst
+                    )
+
     dimX, dimY = conf_matrix.shape
     quantid_arr = [0] * len(lstClassEst)
     allocat_arr = [0] * len(lstClassEst)
@@ -78,9 +82,7 @@ def allocation_erros (dfRefClass, showInfo):
     shift_arr = [0] * len(lstClassEst)
     total = np.sum(conf_matrix)
 
-    confMatrix = set_all_sum_of_matrix_acc(conf_matrix)
-    
-    
+    confMatrix = set_all_sum_of_matrix_acc(conf_matrix)    
     dfConfM =  pd.DataFrame(confMatrix, columns= lstClassEst + ["Total"], index= lstClassEst + ['Total'])        
                
     if showInfo:
@@ -115,7 +117,6 @@ def allocation_erros (dfRefClass, showInfo):
         shift_arr[ii] = calc
 
     return quantid_arr, allocat_arr, exchange_arr, shift_arr, dfConfM
-
 
 
 def user_prod_acc_err(mat_conf, dim):
@@ -185,10 +186,14 @@ def calculing_Aggrements_AccGlobal_ModelVers(dfacctmp, lst_regBacias):
         
         lstDfInd = []
         dicttmp = {}
-        lstYY = list(range(1985, 2023))
+        lastYear = 2022
+        if colectionFilters:
+            lastYear = 2023
+        lstYY = list(range(1985, lastYear))
         lsDFF = []
         for nyear in lstYY:
             dfYY = df_tmp[[f'CLASS_{nyear}', f'classification_{nyear}']]
+            print(dfYY.shape)
             dfYY.columns = ['reference', 'classification']
             lsDFF.append(dfYY)            
             print(f"=========== YEAR {nyear} =========== BACIA {mbacia}")            
@@ -340,13 +345,19 @@ def change_class_nameClass(row):
         "AQUICULTURA": 33,
         "NÃO OBSERVADO": 27  
     }
+    
     for yyear in range(1985, 2023):
         nameCol = f"CLASS_{yyear}"
         row[nameCol] = dictRemapL2[row[nameCol]]
     return row
 
 joinallTables = False
-base_path, input_path_CSVs = getPathCSV('acc/ptosAccCol10')
+sobre_escrever = True
+colectionFilters = True
+if colectionFilters:
+    base_path, input_path_CSVs = getPathCSV('acc/ptosAccCol10')
+else:
+    base_path, input_path_CSVs = getPathCSV('acc/ptosAccColBef')
 print("path the base ", base_path)
 print("path of CSVs from folder :  \n ==> ", input_path_CSVs)
 
@@ -354,7 +365,8 @@ lstColRef = ['CLASS_' + str(kk) for kk in range(1985, 2023)]
 lstColPred = ['classification_' + str(kk) for kk in range(1985, 2023)]
 lYears = [kk for kk in range(1985, 2023)]
 
-sobre_escrever = False
+# sys.exit()
+
 mversion = ''
 lstFilters = [ 
     'Gap-fill', 'TemporalJ3', 'TemporalAJ3', 'TemporalJ4', 'TemporalAJ4', 
@@ -373,12 +385,14 @@ if joinallTables:
         nome_csv = path.split("/")[-1]    
         partes = nome_csv.split('_')    
         print(partes)
-        filtro = partes[3]
-        colecao = 'Col10'
-        if filtro == 'integration':
-            version = 1
+        if len(partes) > 5:
+            filtro = partes[5] 
+            colecao = partes[4] 
         else:
-            version = int(partes[-1][1:].replace('.csv', ''))
+            filtro = partes[3]
+            colecao = 'Col10'
+        
+        version = int(partes[-1][1:].replace('.csv', ''))
 
         df_CSV = pd.read_csv(path)       # , sep=',', encoding='iso-8859-1'         
         print(df_CSV.head())    
@@ -387,9 +401,19 @@ if joinallTables:
         print(f" 📢 loading 🕙 {nome_csv} size = <{df_CSV.shape}> | filtro << {filtro} >> | vers {version}")
         # preenchendo as colunas que faltam com informações no nome
         # removendo LAT LON PESO_AMOS bacia 
-        df_CSV = df_CSV[lstColRef + lstColPred + ['bacia']] 
-        if sobre_escrever:
-            df_CSV = df_CSV.progress_apply(change_class_nameClass, axis= 1)
+        # sys.exit()
+        try:
+            df_CSV = df_CSV[lstColRef + lstColPred + ['bacia']] 
+        except:
+            df_CSV = df_CSV[lstColRef + lstColPred[:-2] + ['bacia']]
+        
+        # if sobre_escrever:
+        try:
+            df_CSVA = df_CSV.progress_apply(change_class_nameClass, axis= 1)
+            df_CSV = df_CSVA.copy()
+        except:
+            print(" As classes já estão convertidas ")
+
         df_CSV['filters_type'] = [filtro] * df_CSV.shape[0]         
         df_CSV['version'] = [version] * df_CSV.shape[0]
         df_CSV['Collections'] = [colecao] * df_CSV.shape[0]
@@ -421,8 +445,12 @@ if joinallTables:
     classInic = [3,4, 9,10,12,15,18,21,22,27,29,33,50]
     classFin  = [3,4,12,12,12,21,21,21,22,27,22,33, 3]
     # for cc, colRef in enumerate(lstRef):
-    dfacc[lstColRef] = dfacc[lstColRef].replace(classInic, classFin) 
-    dfacc[lstColPred] = dfacc[lstColPred].replace(classInic, classFin)
+    dfacc[lstColRef] = dfacc[lstColRef].replace(classInic, classFin)  
+    try:   
+        dfacc[lstColPred] = dfacc[lstColPred].replace(classInic, classFin)
+    except:
+        dfacc[lstColPred[:-2]] = dfacc[lstColPred[:-2]].replace(classInic, classFin)
+
 
     # print("corregindo  os valores 0 e 27 ")
     print("remove class 27 from  dataset  size 93942")
@@ -432,25 +460,30 @@ if joinallTables:
     for colref in lstColRef:
         dfacc = dfacc[dfacc[colref] != 27]
 
-    lstClassRef = [kk for kk in dfacc[lstColRef].stack().drop_duplicates().tolist()]
-    lstClassPred = [kk for kk in dfacc[lstColPred].stack().drop_duplicates().tolist()]
-
+    lstClassRef = [int(kk) for kk in dfacc[lstColRef].stack().drop_duplicates().tolist()]
+    lstClassPred = [int(kk) for kk in dfacc[lstColPred].stack().drop_duplicates().tolist()]
+    print(lstClassPred)
     lstClassRef.sort(reverse=False)
     lstClassPred.sort(reverse=False) 
     print(f" ⚠️ We have {lstClassRef} class from Refence Points {dfacc.shape}")
     print(f" ⚠️ We have {lstClassPred} class from Classifications Raster ")
-
-    path_save = os.path.join(base_path, 'dados','acc', 'occTab_corr_Caatinga_Allfilter_Allversion.csv')   
+    if colectionFilters: 
+        path_save = os.path.join(base_path, 'dados','acc', 'occTab_corr_Caatinga_Allfilter_version9.csv')   
+    else:
+        path_save = os.path.join(base_path, 'dados','acc', 'occTab_corr_Caatinga_Collection_befores.csv')  
     print('saving in >> ', path_save)
     dfacc.to_csv(path_save)
 else:
-    path_input = os.path.join(base_path, 'dados','acc', 'occTab_corr_Caatinga_Allfilter_Allversion.csv')   
+    if colectionFilters: 
+        path_input = os.path.join(base_path, 'dados','acc', 'occTab_corr_Caatinga_Allfilter_version9.csv')   
+    else:
+        path_input = os.path.join(base_path, 'dados','acc', 'occTab_corr_Caatinga_Collection_befores.csv')   
     print('reading data from >> ', path_input)
     dfacc = pd.read_csv(path_input)
     print("=================================================")
     # print(dfacc.head(10))
     colShow = ['CLASS_1985', 'classification_1985', 'bacia', 'filters_type', 'version' , 'Collections']  
-    print(tabulate(dfacc[colShow].head(10), headers = 'keys', tablefmt = 'psql'))
+    print(tabulate(dfacc[dfacc['filters_type'] == 'SpatialsAll'][colShow].head(10), headers = 'keys', tablefmt = 'psql'))
     print("=================================================")
     dfacc['bacia'] = dfacc['bacia'].astype(str)
     print("size table ", dfacc.shape)
@@ -464,37 +497,37 @@ else:
 # sys.exit()
 # Remap column values in inplace
 
-
+version = 9
 showPrints = True
 # sys.exit()                    
 if buildMetricsAcc: 
     # Make Dataframe by Year and by Basin
-    lstBacias = []
-    lstYear = []
+    # lstBacias = []
+    # lstYear = []
     lstRegs = ['Caatinga'] + listaNameBacias                     
-    lstVersion = [version] * len(lstRegs) * len(lYears)     
-    lstFilters = [filtro] * len(lstRegs) * len(lYears)               
-    for nbacia in lstRegs:
-        lstBacias += [nbacia] * len(lYears)
-        lstYear += lYears
+    # lstVersion = [version] * len(lstRegs) * len(lYears)     
+    # lstFilters = [filtro] * len(lstRegs) * len(lYears)               
+    # for nbacia in lstRegs:
+    #     lstBacias += [nbacia] * len(lYears)
+    #     lstYear += lYears
 
-    print("Adding metrics Acc in the dictionary by Year")
-    dictAcc = {
-        "Version": lstVersion,  
-        "Filters": lstFilters,              
-        "Bacia" : lstBacias,    
-        "Years": lstYear   
-    }
-    dfAccYYBa = pd.DataFrame.from_dict(dictAcc)
-    print("size data frame by bacia", dfAccYYBa.shape)
-    print("versions ", dfAccYYBa["Version"].unique())
-    # print(dfAccYYBa.head())
-    print(tabulate(dfAccYYBa.head(), headers = 'keys', tablefmt = 'psql'))
-    # print(dfAccYYBa.tail())
-    print(tabulate(dfAccYYBa.tail(), headers = 'keys', tablefmt = 'psql'))
-    print("==========================================================")
-    print("----------------------------------------------------------")
-    print("")
+    # print("Adding metrics Acc in the dictionary by Year")
+    # dictAcc = {
+    #     "Version": lstVersion,  
+    #     "Filters": lstFilters,              
+    #     "Bacia" : lstBacias,    
+    #     "Years": lstYear   
+    # }
+    # dfAccYYBa = pd.DataFrame.from_dict(dictAcc)
+    # print("size data frame by bacia", dfAccYYBa.shape)
+    # print("versions ", dfAccYYBa["Version"].unique())
+    # # print(dfAccYYBa.head())
+    # print(tabulate(dfAccYYBa.head(), headers = 'keys', tablefmt = 'psql'))
+    # # print(dfAccYYBa.tail())
+    # print(tabulate(dfAccYYBa.tail(), headers = 'keys', tablefmt = 'psql'))
+    # print("==========================================================")
+    # print("----------------------------------------------------------")
+    # print("")
 
     # sys.exit()
     # .iloc[:1]
@@ -505,7 +538,7 @@ if buildMetricsAcc:
     print("the size table is ", dfAccBa.shape)
 
     pathOutpout = base_path + '/dados/globalTables'
-    nameTablesGlob = "regMetricsAccs_All_Col10.csv"   
+    nameTablesGlob = "regMetricsAccs_All_Col10_v9.csv"   
 
     print("====== SAVING GLOBAL ACCURACY BY YEARS =========== ")
     dfAccBa.to_csv(os.path.join(pathOutpout, nameTablesGlob))
@@ -553,8 +586,11 @@ if buildMetAggrements:
     # checked and Create the directory
     pathOutpout = base_path + '/dados/globalTables'
     # path = Path(pathOutpout)
-    # path.mkdir(parents=True, exist_ok=True)    
-    nameTablesGlob = "regAggrementsAcc_All_Col10.csv"
+    # path.mkdir(parents=True, exist_ok=True)   
+    
+    nameTablesGlob = "regAggrementsAcc_All_Col10_v9.csv"
+    if "ptosAccColBef " in input_path_CSVs:
+        nameTablesGlob = "regAggrementsAcc_ColectionBefore.csv"
     dfAggCalc.to_csv(os.path.join(pathOutpout, nameTablesGlob), index= False)
     # sys.exit()
 

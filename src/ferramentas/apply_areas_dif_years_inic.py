@@ -40,8 +40,8 @@ param = {
     "asset_afloramento": 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/Classifier/rockyoutcropcol10',
     "asset_collectionId": 'LANDSAT/COMPOSITES/C02/T1_L2_32DAY',
     "output_asset": 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/POS-CLASS/transitionTest',
-    'versionOut' : 8,
-    'versionInp' : 8,
+    'versionOut' : 9,
+    'versionInp' : 9,
     'last_year' : 2024,
     'first_year': 1985,
 }

@@ -93,9 +93,11 @@ for ii, year in enumerate(range(1985, 2025)):  #
                     .set('biome', param['biome'])
                     .set('year', year)
                     .set('version', str(param['version_output']))
-                    .set('collection', param['collection'])
+                    .set('collection_id', param['collection'])
+                    .set('description', 'versão pre-integrada da equipe Caatinga')
                     .set('source', param['source'])
-                    .set('theme',None)
+                    .set('theme', None)
+                    .set('territory', 'BRAZIL')
                     .set('system:footprint', bioma5kbuf)    
             )
 

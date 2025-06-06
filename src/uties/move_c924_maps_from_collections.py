@@ -9,7 +9,6 @@
 
 import ee
 import os 
-import copy
 import sys
 from pathlib import Path
 import collections
@@ -42,16 +41,17 @@ param = {
     'asset_collection_by_year': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/Classifier/ClassifyV2YX',
     'asset_output': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/Classifier/ClassifyVA',
     'bioma': "CAATINGA",
-    'version': 6,
+    'version_input': 10,
+    'version_output': 10
 }
 nameBacias = [
-    # '7691', '7754', '7581', '7625', '7584', '751', '7614', 
-    # '7616', '745', '7424', '773', '7612', '7613', 
-    # '7618', '7561', '755', '7617', '7564', '761111','761112', 
-    # '7741', '7422', '76116', '7761', '7671', '7615', '7411', 
-    # '7764', '757', '771', '766', '7746', '753', '764', 
-    # '7541', '7721', '772', '7619', '7443','7544', '7438', 
-    # '763', '7591', '7592', '746','7712', '752', '765', '7622',
+    '7691', '7754', '7581', '7625', '7584', '751', '7614', 
+    '7616', '745', '7424', '773', '7612', '7613', 
+    '7618', '7561', '755', '7617', '7564', '761111','761112', 
+    '7741', '7422', '76116', '7761', '7671', '7615', '7411', 
+    '7764', '757', '771', '766', '7746', '753', '764', 
+    '7541', '7721', '772', '7619', '7443','7544', '7438', 
+    '763', '7591', '7592', '746','7712', '752', '765', '7622',
 ]
 def processoExportar(mapaRF, regionB, nomeDesc):
     idasset =  os.path.join(param['asset_output'] , nomeDesc)
@@ -76,25 +76,29 @@ lst_year = [yyear for yyear in range(1985, 2026)]
 lstbaciabuffer = ee.FeatureCollection(param['asset_bacias_buffer'])
         
 imCol90 = ee.Image(param['assetMapbiomas90'])
-
+# lstBaciasreproc = [ "7613","7746","7754","7741","773","761112","7591","7581","757"]
+# lstBaciasreproc = [ "7613","7746","7741","7591","7581","757"]
+lstBaciasreproc = ["7591"]
 imColbyYear = ee.ImageCollection(param['asset_collection_by_year'])
 # lstIdCodbYear = imColbyYear.reduceColumns(ee.Reducer.toList(), ['system:index']).get('list').getInfo()
 # print(lstIdCodbYear)
 # lstExc = ['751', '7625']
 # lstNameBacias = [f'BACIA_{cbasin}_2024_GTB_col10-v_4' for cbasin in lstExc]
-for nbacia in nameBacias[:]:
+for nbacia in lstBaciasreproc[:]:
     print(f'load {nbacia} ')
     baciabuffer = lstbaciabuffer.filter(ee.Filter.eq('nunivotto4', nbacia))
     print(f"know about the geometry 'nunivotto4' >>  {nbacia} loaded < {baciabuffer.size().getInfo()} > geometry" ) 
     baciabuffer = baciabuffer.map(lambda f: f.set('id_codigo', 1))
     bacia_raster =  baciabuffer.reduceToImage(['id_codigo'], ee.Reducer.first()).gt(0)
-    baciabuffer = baciabuffer.geometry()
-    
+    baciabuffer = baciabuffer.geometry()    
     colBacia = ee.Image().byte()
     lstBands = []
-    for nyear in range(1985, 2026):
+    for nyear in range(1985, 2025):
         bandActiva = f'classification_{nyear}' 
-        newNameInd = f'BACIA_{nbacia}_{nyear}_GTB_col10-v_4'
+        if nbacia in lstBaciasreproc:
+            newNameInd = f'BACIA_{nbacia}_{nyear}_GTB_col10-v_{param['version_input']}'
+        else:
+            newNameInd = f'BACIA_{nbacia}_{nyear}_GTB_col10-v_4'
         print("addding ", newNameInd)
         imMapsYY = imColbyYear.filter(ee.Filter.eq('system:index', newNameInd)).first()
         # print(imMapsYY.bandNames().getInfo())
@@ -108,7 +112,7 @@ for nbacia in nameBacias[:]:
     # sys.exit()
     mydict = {
             'id_bacia': nbacia,
-            'version': param['version'],
+            'version': param['version_output'],
             'biome': param['bioma'],
             'classifier': 'GTB',
             'collection': '10.0',
@@ -117,4 +121,4 @@ for nbacia in nameBacias[:]:
         }                    
     colBacia = colBacia.set(mydict)
     colBacia = colBacia.set("system:footprint", baciabuffer.coordinates())
-    processoExportar(colBacia, baciabuffer, newNameInd.replace('_v_4', '_v6'))
+    processoExportar(colBacia, baciabuffer, f'BACIA_{nbacia}_GTB_col10-v_{param['version_output']}')

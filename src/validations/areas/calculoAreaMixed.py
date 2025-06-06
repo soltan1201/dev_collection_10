@@ -24,7 +24,7 @@ projAccount = get_current_account()
 print(f"projetos selecionado >>> {projAccount} <<<")
 # sys.exit()
 try:
-    ee.Initialize(project= projAccount) #
+    ee.Initialize(project= projAccount)
     print('The Earth Engine package initialized successfully!')
 except ee.EEException as e:
     print('The Earth Engine package failed to initialize!')
@@ -42,9 +42,9 @@ nameBacias = [
     '7541', '7721', '772', '7619', '7443','7544', '7438', 
     '763', '7591', '7592', '7622', '746','7712', '752',  
 ] 
-# nameBacias = [
-#     '763','7618'
-# ]
+lstBaciasSecu = [ "7613","7746","7754","7741","773","761112","7591","7581","757"]
+lstnameBaciasV9 = ["7754","773","761112"]
+lstnameBaciasV10 = ["7591","7613","7746","7741","7581","757"]
 classMapB = [ 0, 3, 4, 5, 6, 9,11,12,13,15,18,19,20,21,22,23,24,25,26,29,30,31,32,33,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,62]
 classNew =  [27, 3, 4, 3, 3, 3,12,12,12,21,21,21,21,21,22,22,22,22,33,29,22,33,12,33,21,33,33,21,21,21,21,21,21,21,21,21,21, 4,12,21]
 param = {
@@ -54,15 +54,17 @@ param = {
     # 'assetFilters': 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/POS-CLASS/Estavel',
     # 'assetFilters': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/POS-CLASS/Spatials',
     # 'assetFilters': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/POS-CLASS/Spatials_int',
-    # 'assetFilters': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/POS-CLASS/Spatials_all',
-    'assetFilters': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/POS-CLASS/transition',
+    'assetFilters': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/POS-CLASS/Spatials_all',
+    # 'assetFilters': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/POS-CLASS/transitionTest',
+    'assetFiltersExt': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/POS-CLASS/Spatials_all',
+    'assetFiltersSeg': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/POS-CLASS/transitionTest',
     # 'assetFilters': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/POS-CLASS/Frequency',
-    # 'assetFilters': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/POS-CLASS/TemporalCC',
-    # 'assetFilters': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/POS-CLASS/Merger',
+    # 'assetFilters': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/POS-CLASS/Temporal',
+    # 'assetFilters': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/POS-CLASS/MergerV6',
     # 'assetFilters': 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/Classifier/toExport',
     # 'asset_Map' : "projects/mapbiomas-public/assets/brazil/lulc/collection8/mapbiomas_collection80_integration_v1",
-    # 'asset_Map': 'projects/mapbiomas-public/assets/brazil/lulc/collection7_1/mapbiomas_collection71_integration_v1',
-    'asset_Map' : "projects/mapbiomas-public/assets/brazil/lulc/collection9/mapbiomas_collection90_integration_v1",
+    'asset_Map': 'projects/mapbiomas-public/assets/brazil/lulc/collection7_1/mapbiomas_collection71_integration_v1',
+    # 'asset_Map' : "projects/mapbiomas-public/assets/brazil/lulc/collection9/mapbiomas_collection90_integration_v1",
     'asset_bacias_buffer': 'projects/mapbiomas-workspace/AMOSTRAS/col9/CAATINGA/bacias_hidrografica_caatinga_49_regions',
     'asset_bacias': 'projects/ee-solkancengine17/assets/shape/bacias_shp_caatinga_div_49_regions',
     "asset_biomas_raster" : 'projects/mapbiomas-workspace/AUXILIAR/biomas-raster-41',
@@ -224,7 +226,7 @@ bioma250mil = ee.FeatureCollection(param['assetBiomas'])\
 knowImgcolg = False
 isFilter = True
 if isFilter and ('POS-CLASS' in param['assetFilters'] or 'toExport' in param['assetFilters']):
-    subfolder = "_" + param['assetFilters'].split('/')[-1] + "_min"
+    subfolder = "_" + param['assetFilters'].split('/')[-1] # + "_max"
     print(" subfolder >> ", subfolder)
 else:
     subfolder= ''
@@ -242,10 +244,18 @@ if param['isImgCol']:
     if isFilter:
         imgsMaps = ee.ImageCollection(param['assetFilters'])
         print('imgsMaps ', imgsMaps.aggregate_histogram('version').getInfo())
+        imgsMapsSeg = (ee.ImageCollection(param['assetFiltersSeg'])
+                            .filter(ee.Filter.eq('version', 8)))
+        print('imgs Maps secundarias ', imgsMapsSeg.size().getInfo())
 
+        imgsMapsExt = (ee.ImageCollection(param['assetFiltersExt'])
+                            .filter(ee.Filter.eq('version', 9)))
+        print('imgs Maps secundarias ', imgsMapsExt.size().getInfo())
+        
         if 'Temporal' in param['assetFilters']:
-            imgsMaps = imgsMaps.filter(ee.Filter.eq('janela', 6))
-            subfolder += 'J6'
+            njanela = 3
+            imgsMaps = imgsMaps.filter(ee.Filter.eq('janela', njanela))
+            subfolder += f'J{njanela}'
             print("depois da janela ", imgsMaps.size().getInfo())
             # sys.exit()
             # idList = imgsMaps.reduceColumns(ee.Reducer.toList(), ['system:index']).get('list').getInfo()
@@ -299,13 +309,17 @@ if param['isImgCol']:
                 limitInt = bioma250mil.intersection(ftcol_bacias) 
 
                 # mapClassBacia = mapClassMod.filter(ee.Filter.eq('id_bacias', nbacia)).first()  
-                mapClassBacia = mapClassMod.min()
-                # print("     ", mapClassBacia.bandNames().getInfo())       
-                # print("area da bacia = ", round(ftcol_bacias.area().getInfo() / 10000, 2))
-                # print(" area intersectada = ", round(limitInt.area().getInfo() / 10000, 2))
-
+                if nbacia in lstBaciasSecu:
+                    if nbacia in lstnameBaciasV9:
+                        mapClassBacia = imgsMapsExt.max() 
+                    else:
+                        mapClassBacia = mapClassMod.max()                    
+                else:
+                    mapClassBacia = imgsMapsSeg.max()              
+                    # print("mapClassBacia  ", mapClassBacia.bandNames().getInfo())
                 # sys.exit()           
                 areaM = iterandoXanoImCruda(mapClassBacia, limitInt) 
+                # print(" area ==========> ", areaM.getInfo())
                 areaM = ee.FeatureCollection(areaM).map(lambda feat: feat.set('id_bacia', nbacia))
                 area_mapsGeral = area_mapsGeral.merge(areaM)
             # nameCSVBa = nameCSV + "_" + nbacia 

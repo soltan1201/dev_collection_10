@@ -117,7 +117,7 @@ nameBacias = [
     '7564', '7422', '76116', '7671', '757', '766', '753', '764',
     '7619', '7443', '7438', '763', '7622', '752'  #    '7691',  
 ] 
-
+lstBaciasSecu = [ "7613","7746","7754","7741","773","761112","7591","7581","757"]
 param = {
     'lsBiomas': ['CAATINGA'],
     'asset_bacias': 'projects/ee-solkancengine17/assets/shape/bacias_shp_caatinga_div_49_regions', # asset bacia revisado 
@@ -133,14 +133,14 @@ param = {
     # 'assetFilters': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/POS-CLASS/Frequency',
     # 'assetFilters': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/POS-CLASS/Spatials',
     # 'assetFilters': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/POS-CLASS/Spatials_int',
-    # 'assetFilters': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/POS-CLASS/Spatials_all',
-    # 'assetFilters': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/POS-CLASS/transitionTest',
+    'assetFilters': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/POS-CLASS/Spatials_all',
+    'assetFiltersSeg': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/POS-CLASS/transitionTest',
     # 'assetFilters': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/POS-CLASS/Frequency',
-    # 'assetFilters': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/POS-CLASS/TemporalCC',
-    'assetFilters': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/POS-CLASS/MergerV6',
-    # 'asset_Map' : "projects/mapbiomas-public/assets/brazil/lulc/collection8/mapbiomas_collection80_integration_v1",
+    # 'assetFilters': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/POS-CLASS/TemporalA',
+    # 'assetFilters': 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/POS-CLASS/MergerV6',
+    'asset_Map' : "projects/mapbiomas-public/assets/brazil/lulc/collection8/mapbiomas_collection80_integration_v1",
     # 'asset_Map': 'projects/mapbiomas-public/assets/brazil/lulc/collection7_1/mapbiomas_collection71_integration_v1',
-    'asset_Map' : "projects/mapbiomas-public/assets/brazil/lulc/collection9/mapbiomas_collection90_integration_v1",
+    # 'asset_Map' : "projects/mapbiomas-public/assets/brazil/lulc/collection9/mapbiomas_collection90_integration_v1",
     # 'assetCol6': path_asset + "class_filtered/maps_caat_col6_v2_4",
     'classMapB': [3, 4, 5, 9,12,13,15,18,19,20,21,22,23,24,25,26,29,30,31,32,33,36,39,40,41,46,47,48,49,50,62],
     'classNew':  [3, 4, 3, 3,12,12,21,21,21,21,21,22,22,22,22,33,29,22,33,12,33,21,21,21,21,21,21,21, 3,12,21],
@@ -156,7 +156,7 @@ param = {
     },
     'lsProp': ['ESTADO','LON','LAT','PESO_AMOS','PROB_AMOS','REGIAO','TARGET_FID','UF'],
     "amostrarImg": False,
-    'isImgCol': False
+    'isImgCol': True
 }
 
 def change_value_class(feat):
@@ -166,17 +166,17 @@ def change_value_class(feat):
         "FORMAÇÃO SAVÂNICA": 4,        
         "MANGUE": 3,
         "RESTINGA HERBÁCEA": 3,
-        "FLORESTA PLANTADA": 21,
+        "FLORESTA PLANTADA": 18,
         "FLORESTA INUNDÁVEL": 3,
         "CAMPO ALAGADO E ÁREA PANTANOSA": 12,
         "APICUM": 12,
         "FORMAÇÃO CAMPESTRE": 12,
-        "AFLORAMENTO ROCHOSO": 22,
+        "AFLORAMENTO ROCHOSO": 29,
         "OUTRA FORMAÇÃO NÃO FLORESTAL":12,
-        "PASTAGEM": 21,
-        "CANA": 21,
-        "LAVOURA TEMPORÁRIA": 21,
-        "LAVOURA PERENE": 21,
+        "PASTAGEM": 15,
+        "CANA": 18,
+        "LAVOURA TEMPORÁRIA": 18,
+        "LAVOURA PERENE": 18,
         "MINERAÇÃO": 22,
         "PRAIA E DUNA": 22,
         "INFRAESTRUTURA URBANA": 22,
@@ -242,6 +242,9 @@ def getPointsAccuraciaFromIC (imClass, isImgCBa, ptosAccCorreg, thisvers, export
     # featureCollection to export colected 
     pointAll = ee.FeatureCollection([])
     ftcol_bacias = ee.FeatureCollection(param['asset_bacias'])
+    imgsMapsSeg = (ee.ImageCollection(param['assetFiltersSeg'])
+                            .filter(ee.Filter.eq('version', 8)))
+    print('imgs Maps secundarias ', imgsMapsSeg.size().getInfo())
 
     sizeFC = ee.Number(0 )
     
@@ -258,18 +261,15 @@ def getPointsAccuraciaFromIC (imClass, isImgCBa, ptosAccCorreg, thisvers, export
         sizeFC = sizeFC.add(ptoSize)
     
         if isImgCBa:
-            mapClassBacia = imClass.filter(ee.Filter.eq('id_bacias', _nbacia))
+            if _nbacia in lstBaciasSecu: 
+                mapClassBacia = imClass.max().updateMask(maskRecBacia)  #.filter(ee.Filter.eq('id_bacias', _nbacia))
+            else:
+                mapClassBacia = imgsMapsSeg.max().updateMask(maskRecBacia)   #.filter(ee.Filter.eq('id_bacias', _nbacia))
             # print(f"Número de image na Bacia {_nbacia} => {mapClassBacia.size().getInfo()}")
-            mapClassBacia = ee.Image(mapClassBacia.first())
+            # mapClassBacia = ee.Image(mapClassBacia.first())
         else:
             print(" 🚨  reading the one image ")
-            mapClassBacia = ee.Image().byte()            
-            for band_act in list_bandas:
-                mapClassBacia = mapClassBacia.addBands(
-                                    ee.Image(imClass).updateMask(maskRecBacia)
-                                    .remap(param['classMapB'], param['classNew']).rename(band_act)
-                )
-            mapClassBacia = mapClassBacia.select(list_bandas)
+            mapClassBacia = ee.Image(imClass).updateMask(maskRecBacia).select(list_bandas)
             # print(mapClassBacia.bandNames().getInfo())
             # sys.exit()
         try:
@@ -292,9 +292,9 @@ def getPointsAccuraciaFromIC (imClass, isImgCBa, ptosAccCorreg, thisvers, export
 
     # if not exportByBasin:
     if 'col10/' in param['asset_Map']:
-        name = 'occTab_corr_Caatinga_Col10_' + str(thisvers) + "_Col10" 
+        name = 'occTab_corr_Caatinga_Col10' + str(thisvers) + "_Col10" 
     else:
-        name =  f"occTab_corr_Caatinga_{subbfolder}"
+        name =  f"occTab_corr_Caatinga{subbfolder}_V{thisvers}"
     processoExportar(pointAll, name, exportarAsset)
     print()
     print(" 📢 numero de ptos ", sizeFC.getInfo())
@@ -306,11 +306,11 @@ if param['changeAcount']:
 
 expPointLapig = False
 knowImgcolg = True
-param['isImgCol'] = False
+param['isImgCol'] = True
 param['inBacia'] = True
-version = 8
-bioma250mil = ee.FeatureCollection(param['assetBiomas'])\
-                    .filter(ee.Filter.eq('Bioma', 'Caatinga')).geometry()
+version = 9
+bioma250mil = (ee.FeatureCollection(param['assetBiomas'])
+                    .filter(ee.Filter.eq('Bioma', 'Caatinga')).geometry())
 ## os pontos só serão aqueles que representam a Caatinga 
 caatingaBuffer = ee.FeatureCollection(param['asset_caat_buffer'])
 
@@ -339,28 +339,30 @@ else:
 subfolder= ''
 isFilter = True
 if isFilter and ('POS-CLASS' in param['assetFilters']  or 'toExport' in param['assetFilters']):
-    subfolder = "_" + param['assetFilters'].split('/')[-1] + "Min"
+    subfolder = "_" + param['assetFilters'].split('/')[-1] #+ "Min"
 else:
     subfolder= ''
 
 if param['isImgCol']:
     if isFilter:
         print("reading filters ")
-        mapClass = ee.ImageCollection(param['assetFilters'])
+        mapClass = (ee.ImageCollection(param['assetFilters'])
+                            .filter(ee.Filter.eq('version', version)))
         print("show versions ", mapClass.aggregate_histogram('version').getInfo())
         if 'Temporal' in param['assetFilters']:
-            mapClass = mapClass.filter(ee.Filter.eq('janela', 3))
-            subfolder += 'J3'
+            njanela = 3
+            mapClass = mapClass.filter(ee.Filter.eq('janela', njanela))                       
+            subfolder += f'J{njanela}'
             print(mapClass.first().get('system:index').getInfo())
 
-        if 'Gap-fill' in param['assetFilters']:
-            mapClass = mapClass.filter(ee.Filter.eq('version', version))
+        # if 'Gap-fill' in param['assetFilters']:
+        #     mapClass = mapClass.filter(ee.Filter.eq('version', version))
 
     else:
         mapClass = ee.ImageCollection(param['assetCol'])# .select(lstBands)
 
     getid_bacia = mapClass.first().get('id_bacias').getInfo()
-    print(f"we load bacia {getid_bacia}")
+    print(f"we load bacia {getid_bacia}")    
     
     # sys.exit()
     if knowImgcolg:

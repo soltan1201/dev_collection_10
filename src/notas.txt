@@ -26,3 +26,8 @@ projects/mapbiomas-public/assets/brazil/lulc/collection9/mapbiomas_collection90_
 
 ## 
 https://code.earthengine.google.com/7039be27d0ee3c21c798c70d2845ff11
+
+
+sequencias de filtros 
+filter Gap-fil >> Spatial >> Temporal J3 >> TemporalA J3 >> Temporal J4 >> TemporalA J4 
+>> Temporal J5 >> TemporalA J5 >> Spatial_int >> Frequency >> Spatial All  

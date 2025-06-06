@@ -42,11 +42,13 @@ class processo_gapfill(object):
             'asset_gedi': 'users/potapovpeter/GEDI_V27',
             'classMapB': [3, 4, 5, 6, 9, 11, 12, 13, 15, 18, 19, 20, 21, 22, 23, 24, 25, 26, 29, 30, 31, 32, 33, 35, 36, 39, 40, 41, 46, 47, 48, 49, 50, 62],
             'classNew':  [3, 4, 3, 3, 3, 12, 12, 12, 21, 21, 21, 21, 21, 22, 22, 22, 22, 33, 29, 22, 33, 12, 33, 21, 21, 21, 21, 21, 21, 21, 21,  4, 12, 21],
+            'version_input': 10,
+            'version_output': 10
             
         }
 
 
-    def __init__(self, nameBacia, conectarPixels, vers):
+    def __init__(self, nameBacia, conectarPixels):
         self.id_bacias = nameBacia
         self.geom_bacia = (ee.FeatureCollection(self.options['asset_bacias_buffer'])
                                         .filter(ee.Filter.eq('nunivotto4', nameBacia))
@@ -55,14 +57,15 @@ class processo_gapfill(object):
         self.bacia_raster =  self.geom_bacia.reduceToImage(['id_codigo'], ee.Reducer.first()).gt(0)                                                    
         self.geom_bacia = self.geom_bacia.geometry()   
         # print("geometria ", len(self.geom_bacia.getInfo()['coordinates']))
-        self.lstbandNames = ['classification_' + str(yy) for yy in range(1985, 2026)]
-        self.years = [yy for yy in range(1985, 2026)]
+        self.lstbandNames = ['classification_' + str(yy) for yy in range(1985, 2025)]
+        self.years = [yy for yy in range(1985, 2025)]
         # print("lista de years \n ", self.years)
         self.conectarPixels = conectarPixels
-        self.version = vers
+        self.version = self.options['version_input']
         # self.model = modelo
         # BACIA_7712_2024_GTB_col10-v_4
-        self.name_imgClass = f"BACIA_{nameBacia}_2025_GTB_col10-v_{4}" # self.version
+        # projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/Classifier/ClassifyVA/BACIA_757_GTB_col10-v_10
+        self.name_imgClass = f"BACIA_{nameBacia}_GTB_col10-v_{self.options['version_input']}" # self.version
         # self.name_imgClass = 'BACIA_corr_mista_' + nameBacia + '_V2'
         
         
@@ -152,11 +155,11 @@ class processo_gapfill(object):
         print(" 🚨🚨🚨  Applying filter Gap Fill 🚨🚨🚨 ")
         print(imageFilled.bandNames().getInfo())
         # sys.exit()
-        name_toexport = f'filterGF_BACIA_{self.id_bacias}_GTB_V{self.version}'
+        name_toexport = f'filterGF_BACIA_{self.id_bacias}_GTB_V{self.options['version_output']}'
         imageFilled = (ee.Image(imageFilled)
                         .updateMask(self.bacia_raster)
                         .set(
-                            'version', int(self.version) + 1, 
+                            'version', self.options['version_output'], 
                             'biome', 'CAATINGA',
                             'source', 'geodatin',
                             'model', "GTB",
@@ -254,12 +257,14 @@ listaNameBacias = [
     # '763', '7591', '7592', '746','7712', '7622', '765', 
 ]
 # listaNameBacias = ['7746', '7619', '763']
-versionMap= 6
+# listaNameBacias = [ "7613","7746","7754","7741","773","761112","7591","7581","757"]
+# listaNameBacias = [ "7613","7746","7741","7591","7581","757"]
+listaNameBacias = ["7591"]
 cont = 49
 # cont = gerenciador(cont)
 # applyGdfilter = False
 for idbacia in listaNameBacias[:]:
     print("-----------------------------------------")
     print("----- PROCESSING BACIA {} -------".format(idbacia))    
-    aplicando_gapfill = processo_gapfill(idbacia, False, versionMap) # added band connected is True
+    aplicando_gapfill = processo_gapfill(idbacia, False) # added band connected is True
     aplicando_gapfill.processing_gapfill()
